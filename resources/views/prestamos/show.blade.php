@@ -17,7 +17,7 @@
                 @include('partials.estado', ['estado' => $estado])
             </p>
         </div>
-        <a class="btn-linea" href="{{ route('clientes.show', $prestamo->cliente) }}">Ver historial del cliente</a>
+        <a class="btn-linea" href="{{ cobro_route('clientes.show', $prestamo->cliente) }}">Ver historial del cliente</a>
     </header>
 
     @if ($prestamo->estado === 'detenido')
@@ -76,7 +76,7 @@
             @if ($prestamo->admitePagos())
                 <section class="panel">
                     <h2>Registrar abono</h2>
-                    <form method="post" action="{{ route('prestamos.pagar', $prestamo) }}">
+                    <form method="post" action="{{ cobro_route('prestamos.pagar', $prestamo) }}">
                         @csrf
                         <label>Valor
                             <input name="monto" type="number" min="1" step="1" value="{{ old('monto', $cuotasAbiertas->first()->saldo ?? '') }}" required>
@@ -99,7 +99,7 @@
             @if ($prestamo->estado === 'activo')
                 <section class="panel">
                     <h2>Detener cobro</h2>
-                    <form method="post" action="{{ route('prestamos.detener', $prestamo) }}">
+                    <form method="post" action="{{ cobro_route('prestamos.detener', $prestamo) }}">
                         @csrf
                         <label>Motivo
                             <input name="motivo" required maxlength="180" placeholder="Viaje, acuerdo, enfermedad">
@@ -113,7 +113,7 @@
                 <section class="panel">
                     <h2>Reanudar</h2>
                     <p class="ayuda">Las cuotas pendientes se corren los días que estuvo detenido, para que esa pausa no se vuelva mora.</p>
-                    <form method="post" action="{{ route('prestamos.reanudar', $prestamo) }}">
+                    <form method="post" action="{{ cobro_route('prestamos.reanudar', $prestamo) }}">
                         @csrf
                         <button class="btn" type="submit">Reanudar cobro</button>
                     </form>
@@ -148,7 +148,7 @@
             @if ($prestamo->pagos->isEmpty() && in_array($prestamo->estado, ['activo', 'detenido']))
                 <section class="panel">
                     <h2>Anular</h2>
-                    <form method="post" action="{{ route('prestamos.anular', $prestamo) }}" onsubmit="return confirm('¿Anular este préstamo?')">
+                    <form method="post" action="{{ cobro_route('prestamos.anular', $prestamo) }}" onsubmit="return confirm('¿Anular este préstamo?')">
                         @csrf
                         <label>Motivo
                             <input name="motivo" required maxlength="180">

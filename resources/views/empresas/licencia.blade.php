@@ -23,7 +23,7 @@
     <section class="panel" style="max-width:640px">
         <p>Lleva este código de solicitud al activador y pega aquí el código que te devuelva.</p>
         <p><strong>{{ $empresa->codigo_solicitud }}</strong></p>
-        <form method="post" action="{{ route('licencia.activar') }}">
+        <form method="post" action="{{ cobro_route('licencia.activar') }}">
             @csrf
             <label>Código de activación
                 <input name="codigo" value="{{ old('codigo') }}" autocomplete="off" required>

@@ -8,10 +8,10 @@
             <h1>Clientes</h1>
             <p>Cada cliente guarda sus préstamos, abonos y el historial.</p>
         </div>
-        <a class="btn" href="{{ route('clientes.create') }}">Nuevo cliente</a>
+        <a class="btn" href="{{ cobro_route('clientes.create') }}">Nuevo cliente</a>
     </header>
 
-    <form class="buscar" method="get" action="{{ route('clientes.index') }}">
+    <form class="buscar" method="get" action="{{ cobro_route('clientes.index') }}">
         <input type="search" name="q" value="{{ $q }}" placeholder="Nombre, documento o teléfono">
         <button class="btn" type="submit">Buscar</button>
     </form>
@@ -33,7 +33,7 @@
                     @foreach ($clientes as $cliente)
                         <tr>
                             <td>
-                                <a href="{{ route('clientes.show', $cliente) }}"><strong>{{ $cliente->nombre }}</strong></a>
+                                <a href="{{ cobro_route('clientes.show', $cliente) }}"><strong>{{ $cliente->nombre }}</strong></a>
                                 <div class="muted">{{ $cliente->documento }}</div>
                             </td>
                             <td>{{ $cliente->telefono }}</td>

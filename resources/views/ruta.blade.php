@@ -22,7 +22,7 @@
         </div>
     </header>
 
-    <form id="form-origen" method="get" action="{{ route('ruta') }}" hidden>
+    <form id="form-origen" method="get" action="{{ cobro_route('ruta') }}" hidden>
         <input name="latitud">
         <input name="longitud">
     </form>
@@ -49,7 +49,7 @@
                 <article class="parada" @if ($parada['tiene_coordenadas']) data-lat="{{ $parada['latitud'] }}" data-lng="{{ $parada['longitud'] }}" id="parada-{{ $parada['cliente_id'] }}" @endif>
                     <span class="parada-orden">{{ $parada['orden'] }}</span>
                     <div>
-                        <a href="{{ route('clientes.show', $parada['cliente_id']) }}"><strong>{{ $parada['nombre'] }}</strong></a>
+                        <a href="{{ cobro_route('clientes.show', $parada['cliente_id']) }}"><strong>{{ $parada['nombre'] }}</strong></a>
                         @if ($parada['direccion'])
                             <div class="muted">{{ $parada['direccion'] }}</div>
                         @endif

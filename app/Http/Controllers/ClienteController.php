@@ -45,7 +45,7 @@ class ClienteController extends Controller
         $cliente = Cliente::create($this->validar($request));
 
         return redirect()
-            ->route('clientes.show', $cliente)
+            ->to(cobro_route('clientes.show', $cliente))
             ->with('ok', 'Cliente guardado.');
     }
 
@@ -69,7 +69,7 @@ class ClienteController extends Controller
         $cliente->update($this->validar($request));
 
         return redirect()
-            ->route('clientes.show', $cliente)
+            ->to(cobro_route('clientes.show', $cliente))
             ->with('ok', 'Datos del cliente actualizados.');
     }
 

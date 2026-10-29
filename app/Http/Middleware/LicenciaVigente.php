@@ -14,7 +14,7 @@ class LicenciaVigente
         $empresa = EmpresaActual::empresa();
 
         if ($empresa && $empresa->base_datos && ! $empresa->puedeOperar()) {
-            return redirect()->route('licencia');
+            return redirect()->to(cobro_route('licencia'));
         }
 
         return $next($request);

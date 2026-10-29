@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Empresa extends Model
 {
     protected $fillable = [
         'nombre',
+        'uuid',
         'slug',
         'base_datos',
         'email',
@@ -26,6 +28,24 @@ class Empresa extends Model
             'fecha_vencimiento' => 'datetime',
             'licencia_activada_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Empresa $empresa) {
+            if (! $empresa->uuid) {
+                $empresa->uuid = (string) Str::uuid();
+            }
+        });
+    }
+
+    public function direccion(): ?string
+    {
+        if (! $this->base_datos || ! $this->uuid) {
+            return null;
+        }
+
+        return route('tenant.login', ['tenant' => $this->uuid]);
     }
 
     public function getConnectionName(): ?string

@@ -5,77 +5,71 @@
 @section('contenido')
     <header class="encabezado">
         <div>
+            <p class="kicker">Escritorio maestro</p>
             <h1>Empresas</h1>
-            <p>Cada empresa nueva abre su propia base de datos. La prueba dura 30 días; después se activa con el código de solicitud.</p>
+            <p>Crear una empresa carga su base y compone su dirección: la raíz del sitio, /tenant/ y el número nuevo.</p>
         </div>
     </header>
 
-    <section class="panel" style="max-width:720px">
-        <h2>Nueva empresa</h2>
-        <form method="post" action="{{ route('empresas.store') }}">
-            @csrf
-            <label>Nombre
-                <input name="nombre" value="{{ old('nombre') }}" required>
-            </label>
-            <div class="fila-form">
+    <div class="tablero">
+        <section class="panel">
+            <h2>Nueva empresa</h2>
+            <form method="post" action="{{ cobro_route('empresas.store') }}">
+                @csrf
+                <label>Nombre
+                    <input name="nombre" value="{{ old('nombre') }}" required>
+                </label>
                 <label>Usuario de esa empresa
                     <input name="usuario_nombre" value="{{ old('usuario_nombre') }}" required>
                 </label>
                 <label>Correo
                     <input type="email" name="usuario_email" value="{{ old('usuario_email') }}" required>
                 </label>
-            </div>
-            <label>Contraseña
-                <input type="password" name="usuario_password" autocomplete="new-password" required>
-            </label>
-            <p class="ayuda">Ese usuario entra directo a su base. El maestro también puede abrirla desde aquí.</p>
-            <button class="btn" type="submit">Crear y entrar</button>
-        </form>
-    </section>
+                <label>Contraseña
+                    <input type="password" name="usuario_password" autocomplete="new-password" required>
+                </label>
+                <p class="ayuda">La prueba dura 30 días. El enlace de entrada aparece en la tarjeta.</p>
+                <button class="btn" type="submit">Crear y entrar</button>
+            </form>
+        </section>
 
-    <section class="panel">
-        <h2>Carteras</h2>
-        @if ($empresas->isEmpty())
-            <p class="vacio">Todavía no hay empresas.</p>
-        @else
-            <table>
-                <thead>
-                    <tr>
-                        <th>Empresa</th>
-                        <th>Base</th>
-                        <th>Licencia</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
+        <section>
+            @if ($empresas->isEmpty())
+                <p class="vacio">Todavía no hay empresas.</p>
+            @else
+                <div class="empresas-lista">
                     @foreach ($empresas as $empresa)
-                        <tr>
-                            <td>
-                                {{ $empresa->nombre }}
+                        <article class="empresa-card">
+                            <header>
+                                <h3>{{ $empresa->nombre }}</h3>
+                                <span class="badge badge-plan">{{ $empresa->plan }}</span>
+                            </header>
+                            <div class="empresa-meta muted">
                                 @if ($empresa->email)
-                                    <div class="muted">{{ $empresa->email }}</div>
+                                    <span>{{ $empresa->email }}</span>
                                 @endif
-                                @if ($empresa->codigo_solicitud)
-                                    <div class="muted">Solicitud {{ $empresa->codigo_solicitud }}</div>
-                                @endif
-                            </td>
-                            <td>{{ $empresa->base_datos ?: 'Principal, en la base central' }}</td>
-                            <td>
-                                {{ $empresa->plan }}
+                                <span>{{ $empresa->base_datos ?: 'Base central' }}</span>
                                 @if ($empresa->fecha_vencimiento)
-                                    <div class="muted">hasta {{ $empresa->fecha_vencimiento->format('d/m/Y') }}</div>
+                                    <span>hasta {{ $empresa->fecha_vencimiento->format('d/m/Y') }}</span>
                                 @endif
-                            </td>
-                            <td class="num">
-                                <form method="post" action="{{ route('empresas.entrar', $empresa) }}">
-                                    @csrf
-                                    <button class="btn" type="submit">{{ (int) $activa === $empresa->id ? 'Seguir aquí' : 'Entrar' }}</button>
-                                </form>
-                            </td>
-                        </tr>
+                            </div>
+                            @if ($direccion = $empresa->direccion())
+                                <a class="direccion-tenant" href="{{ $direccion }}">
+                                    <span>Dirección del tenant</span>
+                                    {{ $direccion }}
+                                </a>
+                            @endif
+                            @if ($empresa->codigo_solicitud)
+                                <p class="muted">Solicitud {{ $empresa->codigo_solicitud }}</p>
+                            @endif
+                            <form method="post" action="{{ cobro_route('empresas.entrar', $empresa) }}">
+                                @csrf
+                                <button class="btn" type="submit">{{ (int) $activa === $empresa->id ? 'Seguir aquí' : 'Entrar' }}</button>
+                            </form>
+                        </article>
                     @endforeach
-                </tbody>
-            </table>
-        @endif
-    </section>
+                </div>
+            @endif
+        </section>
+    </div>
 @endsection

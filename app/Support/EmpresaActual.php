@@ -24,6 +24,10 @@ class EmpresaActual
 
     public static function id(): ?int
     {
+        if (app()->bound('empresa.tenant')) {
+            return (int) app('empresa.tenant')->id;
+        }
+
         $usuario = auth()->user();
 
         if (! $usuario instanceof User) {
@@ -41,6 +45,10 @@ class EmpresaActual
 
     public static function empresa(): ?Empresa
     {
+        if (app()->bound('empresa.tenant')) {
+            return app('empresa.tenant');
+        }
+
         $id = self::id();
 
         return $id ? Empresa::query()->find($id) : null;

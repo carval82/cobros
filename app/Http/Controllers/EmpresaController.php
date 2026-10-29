@@ -16,6 +16,12 @@ class EmpresaController extends Controller
     public function index(): View|RedirectResponse
     {
         if (! auth()->user()->es_maestro) {
+            $propia = Empresa::query()->find(auth()->user()->empresa_id);
+
+            if ($propia?->base_datos) {
+                return redirect()->route('tenant.dashboard', ['tenant' => $propia->uuid]);
+            }
+
             return redirect()->route('dashboard');
         }
 
@@ -68,10 +74,11 @@ class EmpresaController extends Controller
         }
 
         session(['empresa_id' => $empresa->id]);
+        $direccion = $empresa->direccion();
 
         return redirect()
-            ->route('dashboard')
-            ->with('ok', 'Empresa creada con su propia base. Tiene 30 días de prueba. El código de solicitud está en Empresas.');
+            ->route('tenant.dashboard', ['tenant' => $empresa->uuid])
+            ->with('ok', 'Empresa creada. Su gente entra por '.$direccion);
     }
 
     public function licencia(): View|RedirectResponse
@@ -110,7 +117,7 @@ class EmpresaController extends Controller
         ]);
 
         return redirect()
-            ->route('dashboard')
+            ->to(cobro_route('dashboard'))
             ->with('ok', 'Licencia '.$resuelto['plan'].' activa por '.$resuelto['days'].' días.');
     }
 
@@ -119,6 +126,12 @@ class EmpresaController extends Controller
         abort_unless(auth()->user()->es_maestro, 403);
 
         session(['empresa_id' => $empresa->id]);
+
+        if ($empresa->base_datos) {
+            return redirect()
+                ->route('tenant.dashboard', ['tenant' => $empresa->uuid])
+                ->with('ok', 'Trabajando en '.$empresa->nombre.'.');
+        }
 
         return redirect()->route('dashboard')->with('ok', 'Trabajando en '.$empresa->nombre.'.');
     }

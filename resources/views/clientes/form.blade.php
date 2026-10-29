@@ -9,7 +9,7 @@
         </div>
     </header>
     <section class="panel" style="max-width:640px">
-        <form method="post" action="{{ $cliente->exists ? route('clientes.update', $cliente) : route('clientes.store') }}">
+        <form method="post" action="{{ $cliente->exists ? cobro_route('clientes.update', $cliente) : cobro_route('clientes.store') }}">
             @csrf
             @if ($cliente->exists)
                 @method('PUT')

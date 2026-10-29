@@ -14,8 +14,8 @@
             </p>
         </div>
         <div class="acciones">
-            <a class="btn" href="{{ route('prestamos.create', ['cliente' => $cliente->id]) }}">Nuevo préstamo</a>
-            <a class="btn-linea" href="{{ route('clientes.edit', $cliente) }}">Editar</a>
+            <a class="btn" href="{{ cobro_route('prestamos.create', ['cliente' => $cliente->id]) }}">Nuevo préstamo</a>
+            <a class="btn-linea" href="{{ cobro_route('clientes.edit', $cliente) }}">Editar</a>
         </div>
     </header>
 
@@ -41,7 +41,7 @@
                         @foreach ($cliente->prestamos as $prestamo)
                             <tr>
                                 <td>
-                                    <a href="{{ route('prestamos.show', $prestamo) }}">
+                                    <a href="{{ cobro_route('prestamos.show', $prestamo) }}">
                                         @dinero($prestamo->capital) al {{ \App\Support\Dinero::porcentaje($prestamo->porcentaje) }}
                                     </a>
                                     <div class="muted">{{ $prestamo->numero_cuotas }} cuotas {{ strtolower($prestamo->frecuenciaNombre()) }}</div>

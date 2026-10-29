@@ -56,7 +56,7 @@ class PrestamoController extends Controller
         );
 
         return redirect()
-            ->route('prestamos.show', $prestamo)
+            ->to(cobro_route('prestamos.show', $prestamo))
             ->with('ok', 'Préstamo creado. El plan de pagos ya tiene fechas y cuotas.');
     }
 

@@ -12,7 +12,7 @@
 
     <div class="dos">
         <section class="panel">
-            <form method="post" action="{{ route('prestamos.store') }}" id="form-prestamo">
+            <form method="post" action="{{ cobro_route('prestamos.store') }}" id="form-prestamo">
                 @csrf
                 <label>Cliente
                     <select name="cliente_id" required>

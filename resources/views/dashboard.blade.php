@@ -5,12 +5,13 @@
 @section('contenido')
     <header class="encabezado">
         <div>
+            <p class="kicker">Jornada</p>
             <h1>Hoy</h1>
             <p>{{ now()->translatedFormat('l d \d\e F') }}</p>
         </div>
         <div class="acciones">
-            <a class="btn" href="{{ route('prestamos.create') }}">Nuevo préstamo</a>
-            <a class="btn-linea" href="{{ route('clientes.create') }}">Nuevo cliente</a>
+            <a class="btn" href="{{ cobro_route('prestamos.create') }}">Nuevo préstamo</a>
+            <a class="btn-linea" href="{{ cobro_route('clientes.create') }}">Nuevo cliente</a>
         </div>
     </header>
 
@@ -48,7 +49,7 @@
             @else
                 @include('partials.lista-cuotas', ['cuotas' => $atrasadas->take(8)])
                 @if ($atrasadas->count() > 8)
-                    <p><a href="{{ route('atrasados') }}">Ver los {{ $atrasadas->count() }} atrasados</a></p>
+                    <p><a href="{{ cobro_route('atrasados') }}">Ver los {{ $atrasadas->count() }} atrasados</a></p>
                 @endif
             @endif
         </section>

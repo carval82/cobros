@@ -24,7 +24,7 @@
                         @endif
                     </td>
                     <td class="num">@dinero($cuota->saldo)</td>
-                    <td><a href="{{ route('prestamos.show', $cuota->prestamo) }}">Abrir</a></td>
+                    <td><a href="{{ cobro_route('prestamos.show', $cuota->prestamo) }}">Abrir</a></td>
                 </tr>
             @endforeach
         </tbody>

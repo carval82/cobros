@@ -1,16 +1,20 @@
 @extends('layouts.acceso')
 
-@section('titulo', ($primeraCuenta ? 'Primera cuenta' : 'Entrar').' · Cobros')
+@section('titulo', ($empresaTenant ? $empresaTenant->nombre : ($primeraCuenta ? 'Primera cuenta' : 'Entrar')).' · Cobros')
 
 @section('contenido')
-    <h1>{{ $primeraCuenta ? 'Crea la primera cuenta' : 'Entrar' }}</h1>
+    <h1>{{ $empresaTenant->nombre ?? ($primeraCuenta ? 'Crea la primera cuenta' : 'Entrar') }}</h1>
     <p class="ayuda">
-        {{ $primeraCuenta
-            ? 'Todavía no hay usuarios. Esta cuenta será la que abra la cartera.'
-            : 'Usa el correo y la contraseña de tu cuenta.' }}
+        @if ($empresaTenant)
+            Esta es la entrada de {{ $empresaTenant->nombre }}. Usa el correo de esta empresa.
+        @elseif ($primeraCuenta)
+            Todavía no hay usuarios. Esta cuenta será la que abra la cartera.
+        @else
+            Usa el correo y la contraseña de tu cuenta.
+        @endif
     </p>
 
-    <form method="post" action="{{ route('login.store') }}">
+    <form method="post" action="{{ cobro_route('login.store') }}">
         @csrf
         @if ($primeraCuenta)
             <label>Nombre

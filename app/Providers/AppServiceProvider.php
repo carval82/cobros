@@ -36,6 +36,10 @@ class AppServiceProvider extends ServiceProvider
             config(['session.connection' => config('tenencia.central')]);
         }
 
+        if (! config('cache.stores.database.connection')) {
+            config(['cache.stores.database.connection' => config('tenencia.central')]);
+        }
+
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }
