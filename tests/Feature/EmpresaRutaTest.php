@@ -28,11 +28,40 @@ class EmpresaRutaTest extends TestCase
             ->assertRedirect(route('empresas.index'));
 
         $this->actingAs($maestro)
+            ->get('/empresas')
+            ->assertOk()
+            ->assertSee('Empresas registradas')
+            ->assertSee('Norte')
+            ->assertSee('Sur')
+            ->assertSee('Total');
+
+        $this->actingAs($maestro)
             ->withSession(['empresa_id' => $norte->id])
             ->get('/clientes')
             ->assertOk()
             ->assertSee('Ana Norte')
             ->assertDontSee('Beto Sur');
+    }
+
+    public function test_el_panel_muestra_la_direccion_del_tenant(): void
+    {
+        $maestro = User::factory()->create(['es_maestro' => true]);
+        $norte = Empresa::create([
+            'nombre' => 'Norte',
+            'slug' => 'norte',
+            'email' => 'norte@cobros.test',
+            'plan' => 'demo',
+            'activo' => true,
+            'base_datos' => 'cobros_e9',
+            'fecha_vencimiento' => now()->addDays(20),
+        ]);
+
+        $this->actingAs($maestro)
+            ->get('/empresas')
+            ->assertOk()
+            ->assertSee('norte@cobros.test')
+            ->assertSee('/tenant/'.$norte->uuid)
+            ->assertSee('Acceder');
     }
 
     public function test_el_abono_guarda_coordenadas_y_ubica_al_cliente(): void

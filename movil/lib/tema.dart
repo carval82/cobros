@@ -1,29 +1,29 @@
 import 'package:flutter/material.dart';
 
 ThemeData temaCobros() {
-  const tinta = Color(0xFF13201B);
-  const senal = Color(0xFFDFF25A);
-  const papel = Color(0xFFE7EEE6);
+  const tinta = Color(0xFF1C140C);
+  const senal = Color(0xFFE4C16A);
+  const papel = Color(0xFFF3EADC);
 
   return ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: tinta,
+      seedColor: senal,
       primary: tinta,
       secondary: senal,
-      surface: const Color(0xFFFBFCF8),
+      surface: const Color(0xFFFFFAF2),
     ).copyWith(secondary: senal),
     scaffoldBackgroundColor: papel,
     fontFamily: 'Segoe UI',
     appBarTheme: const AppBarTheme(
       backgroundColor: tinta,
-      foregroundColor: Colors.white,
+      foregroundColor: senal,
       centerTitle: false,
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: tinta,
-        foregroundColor: Colors.white,
+        backgroundColor: senal,
+        foregroundColor: tinta,
         minimumSize: const Size.fromHeight(48),
         shape: const StadiumBorder(),
       ),

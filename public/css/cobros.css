@@ -1,23 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,680&family=Outfit:wght@380;500;600;700&display=swap');
 
 :root {
-    --ink: #13201b;
-    --muted: #5d6a62;
-    --line: rgba(19, 32, 27, 0.1);
-    --paper: #e7eee6;
-    --card: rgba(255, 252, 247, 0.86);
-    --navy: #101612;
-    --signal: #dff25a;
-    --gold: #dff25a;
-    --ok: #146b45;
-    --ok-bg: #e4f6ec;
+    --ink: #1c140c;
+    --muted: #6e6254;
+    --line: rgba(28, 20, 12, 0.1);
+    --paper: #f3eadc;
+    --card: rgba(255, 250, 242, 0.92);
+    --navy: #16110c;
+    --signal: #e4c16a;
+    --gold: #c9962e;
+    --ok: #0f7a52;
+    --ok-bg: #e5f6ee;
     --danger: #a32632;
     --danger-bg: #fde8e6;
     --pause: #8a5a12;
     --pause-bg: #f8efd8;
-    --wait: #314238;
-    --wait-bg: #e7eee8;
-    --shadow: 0 20px 50px rgba(16, 22, 18, 0.08);
+    --wait: #3a3124;
+    --wait-bg: #f3eadc;
+    --shadow: 0 20px 50px rgba(28, 20, 12, 0.08);
 }
 
 * { box-sizing: border-box; }
@@ -26,8 +26,8 @@ body {
     margin: 0;
     color: var(--ink);
     background:
-        radial-gradient(900px 420px at 100% -10%, rgba(223, 242, 90, 0.35), transparent 55%),
-        linear-gradient(180deg, #f7f4ee 0%, var(--paper) 42%, #e3ebe4 100%);
+        radial-gradient(900px 420px at 100% -10%, rgba(228, 193, 106, 0.45), transparent 55%),
+        linear-gradient(180deg, #fbf6ec 0%, var(--paper) 42%, #e7dcc8 100%);
     font-family: Outfit, "Segoe UI", sans-serif;
     font-size: 16px;
     letter-spacing: -0.011em;
@@ -43,7 +43,7 @@ a { color: inherit; }
 
 .app {
     display: grid;
-    grid-template-columns: 268px 1fr;
+    grid-template-columns: 268px minmax(0, 1fr);
     min-height: 100vh;
 }
 
@@ -52,12 +52,12 @@ a { color: inherit; }
     top: 0;
     height: 100vh;
     background:
-        radial-gradient(420px 220px at 0% 0%, rgba(223, 242, 90, 0.16), transparent 60%),
+        radial-gradient(420px 220px at 0% 0%, rgba(228, 193, 106, 0.28), transparent 60%),
         var(--navy);
-    color: #f6f3ea;
     padding: 22px 16px 18px;
     display: flex;
     flex-direction: column;
+    color: #f8f1e4;
 }
 
 .marca {
@@ -65,7 +65,27 @@ a { color: inherit; }
     gap: 12px;
     align-items: center;
     text-decoration: none;
-    margin: 4px 6px 26px;
+    margin: 4px 6px 22px;
+}
+
+.marca-logo {
+    width: 100%;
+    max-width: 210px;
+    height: auto;
+    display: block;
+    background: #fff;
+    border-radius: 18px;
+    padding: 10px 12px 8px;
+}
+
+.logo-oro {
+    width: min(100%, 420px);
+    max-height: 46vh;
+    object-fit: cover;
+    object-position: center 42%;
+    display: block;
+    border-radius: 22px;
+    margin-bottom: 8px;
 }
 
 .marca strong { display: block; font-size: 1.2rem; letter-spacing: -0.03em; }
@@ -81,7 +101,7 @@ a { color: inherit; }
     border-radius: 14px;
     font-family: Fraunces, serif;
     font-weight: 680;
-    box-shadow: 0 0 0 6px rgba(223, 242, 90, 0.12);
+    box-shadow: 0 0 0 6px rgba(228, 193, 106, 0.18);
 }
 
 .side nav { display: grid; gap: 4px; flex: 1; align-content: start; }
@@ -90,7 +110,7 @@ a { color: inherit; }
     text-decoration: none;
     padding: 11px 12px;
     border-radius: 12px;
-    color: #d5dbd2;
+    color: #e6dccb;
     font-weight: 500;
 }
 
@@ -113,7 +133,7 @@ a { color: inherit; }
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.sesion p { margin: 0 0 8px; color: #d7ddd4; font-size: 0.92rem; }
+.sesion p { margin: 0 0 8px; color: #eadfce; font-size: 0.92rem; }
 .sesion p:first-child { font-weight: 650; color: white; }
 
 button.salir {
@@ -125,11 +145,11 @@ button.salir {
     border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
-main { padding: 32px 36px 56px; }
+main { min-width: 0; padding: 32px 36px 56px; }
 
 .kicker {
     margin: 0 0 6px;
-    color: #3e6848;
+    color: #8d6a28;
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.16em;
@@ -166,9 +186,9 @@ main { padding: 32px 36px 56px; }
     justify-content: center;
 }
 
-.btn { background: var(--navy); color: white; }
-.btn:hover { background: #243028; }
-.btn-linea { background: transparent; color: var(--navy); border: 1px solid rgba(19, 32, 27, 0.16); }
+.btn { background: var(--signal); color: var(--ink); }
+.btn:hover { background: #f0d48a; }
+.btn-linea { background: transparent; color: var(--ink); border: 1px solid rgba(201, 150, 46, 0.45); }
 .btn-peligro { background: var(--danger); color: white; }
 .btn-pausa { background: var(--pause); color: white; }
 
@@ -191,7 +211,7 @@ main { padding: 32px 36px 56px; }
     width: 90px;
     height: 90px;
     border-radius: 50%;
-    background: rgba(223, 242, 90, 0.45);
+    background: rgba(228, 193, 106, 0.55);
 }
 .cifra span { display: block; color: var(--muted); font-size: 0.82rem; position: relative; }
 .cifra strong {
@@ -215,7 +235,7 @@ main { padding: 32px 36px 56px; }
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 12px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
 th { color: var(--muted); font-weight: 650; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; }
-tr:hover td { background: rgba(223, 242, 90, 0.18); }
+tr:hover td { background: rgba(228, 193, 106, 0.18); }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 .badge { display: inline-flex; border-radius: 999px; padding: 4px 10px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
@@ -225,12 +245,12 @@ tr:hover td { background: rgba(223, 242, 90, 0.18); }
 .badge-wait { background: var(--wait-bg); color: var(--wait); }
 .badge-done { background: #eceae4; color: #4d564c; }
 .badge-muted { background: #eee; color: #666; }
-.badge-plan { background: #17211c; color: var(--signal); }
+.badge-plan { background: #1c140c; color: var(--signal); }
 
 label { display: grid; gap: 6px; font-size: 0.84rem; font-weight: 650; margin-bottom: 12px; }
 input, select, textarea {
     width: 100%;
-    border: 1px solid rgba(19, 32, 27, 0.12);
+    border: 1px solid rgba(28, 20, 12, 0.12);
     background: rgba(255, 255, 255, 0.9);
     border-radius: 14px;
     padding: 12px 13px;
@@ -238,8 +258,8 @@ input, select, textarea {
     color: var(--ink);
 }
 input:focus, select:focus, textarea:focus {
-    outline: 3px solid rgba(223, 242, 90, 0.85);
-    border-color: #243028;
+    outline: 3px solid rgba(228, 193, 106, 0.85);
+    border-color: #8d6a28;
 }
 textarea { min-height: 90px; resize: vertical; }
 .fila-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -256,6 +276,12 @@ textarea { min-height: 90px; resize: vertical; }
 .resumen-preview { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; }
 .resumen-preview strong { font-family: Fraunces, serif; font-size: 1.3rem; }
 
+.cifras-empresas { grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); }
+a.direccion-corta { display: inline-block; max-width: 240px; margin: 0; padding: 8px 10px; font-size: 0.78rem; }
+.filtros { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; align-items: end; margin-bottom: 16px; }
+.filtros label { margin: 0; }
+.acciones-tabla { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.acciones-tabla .btn, .acciones-tabla .btn-linea { min-height: 36px; padding: 8px 12px; }
 .empresas-lista { display: grid; gap: 12px; }
 .empresa-card { padding: 16px 16px 14px; }
 .empresa-card header { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
@@ -267,14 +293,14 @@ textarea { min-height: 90px; resize: vertical; }
     margin: 4px 0 12px;
     padding: 12px 14px;
     border-radius: 14px;
-    background: #121915;
+    background: #1c140c;
     color: var(--signal);
     text-decoration: none;
     font-size: 0.92rem;
     line-height: 1.45;
     word-break: break-all;
 }
-.direccion-tenant span { display: block; color: #9aa69a; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 4px; }
+.direccion-tenant span { display: block; color: #cbb892; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 4px; }
 
 .pagina-acceso { min-height: 100vh; margin: 0; }
 .acceso-marco {
@@ -286,10 +312,10 @@ textarea { min-height: 90px; resize: vertical; }
     position: relative;
     overflow: hidden;
     padding: 36px 48px;
-    color: #f6f3ea;
+    color: #f8f1e4;
     background:
-        radial-gradient(500px 280px at 15% 20%, rgba(223, 242, 90, 0.22), transparent 60%),
-        linear-gradient(160deg, #1a2420 0%, #0d1210 70%);
+        radial-gradient(500px 280px at 15% 20%, rgba(228, 193, 106, 0.28), transparent 60%),
+        linear-gradient(160deg, #241c12 0%, #0e0c09 70%);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -309,7 +335,7 @@ textarea { min-height: 90px; resize: vertical; }
     bottom: 80px;
     width: 280px;
     height: 280px;
-    border: 1px dashed rgba(223, 242, 90, 0.45);
+    border: 1px dashed rgba(228, 193, 106, 0.5);
     border-radius: 50%;
 }
 .ruta-dibujo::before, .ruta-dibujo::after {
@@ -319,8 +345,8 @@ textarea { min-height: 90px; resize: vertical; }
     background: var(--signal);
 }
 .ruta-dibujo::before { width: 14px; height: 14px; left: 28px; top: 46px; }
-.ruta-dibujo::after { width: 22px; height: 22px; right: 36px; bottom: 40px; box-shadow: 0 0 0 10px rgba(223, 242, 90, 0.15); }
-.acceso-pie { position: relative; max-width: 36ch; color: #c9d2c8; }
+.ruta-dibujo::after { width: 22px; height: 22px; right: 36px; bottom: 40px; box-shadow: 0 0 0 10px rgba(228, 193, 106, 0.18); }
+.acceso-pie { position: relative; max-width: 36ch; color: #e4d5bc; }
 
 .acceso {
     display: flex;
@@ -356,7 +382,7 @@ textarea { min-height: 90px; resize: vertical; }
     .marca { margin-bottom: 12px; }
     .sesion { display: none; }
     main, .acceso { padding: 20px 16px 36px; }
-    .grid-cifras, .dos, .tablero, .fila-form, .historial li, .acceso-marco { grid-template-columns: 1fr; }
+    .grid-cifras, .cifras-empresas, .dos, .tablero, .fila-form, .historial li, .acceso-marco, .filtros { grid-template-columns: 1fr; }
     .encabezado { display: grid; }
     .acceso-relato { min-height: 280px; padding: 22px 18px; }
     .acceso-relato h2 { font-size: 3rem; }

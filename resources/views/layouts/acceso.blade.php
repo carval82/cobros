@@ -3,23 +3,17 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('titulo', 'Entrar · Cobros')</title>
-    <link rel="stylesheet" href="{{ asset('css/cobros.css') }}">
+    <title>@yield('titulo', 'Entrar · Cobras')</title>
+    <link rel="icon" href="{{ asset('favicon.ico') }}">
+    <link rel="stylesheet" href="{{ asset('css/cobros.css') }}?v={{ filemtime(public_path('css/cobros.css')) }}">
 </head>
 <body class="pagina-acceso">
     <div class="acceso-marco">
         <aside class="acceso-relato">
-            <a class="marca" href="{{ cobro_route('login') }}">
-                <span class="marca-sigla">Cb</span>
-                <span>
-                    <strong>Cobros</strong>
-                    <small>Ruta de caja</small>
-                </span>
-            </a>
+            <img class="logo-oro" src="{{ asset('image/cobras-oro.jpg') }}" alt="Cobras, soluciones en cobranzas">
             <div>
-                <p class="kicker" style="color:#dff25a">En la calle</p>
+                <p class="kicker" style="color:#e4c16a">En la calle</p>
                 <h2>La cartera camina con quien cobra.</h2>
-                <span class="ruta-dibujo" aria-hidden="true"></span>
             </div>
             <p class="acceso-pie">Cada empresa abre su propia base y entra por su número de tenant, pegado a la raíz del sitio.</p>
         </aside>

@@ -73,9 +73,9 @@ class _EntradaState extends State<Entrada> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            const SizedBox(height: 24),
-            Text('Cobros', style: Theme.of(context).textTheme.displaySmall),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
+            Image.asset('assets/cobras.png', height: 180),
+            const SizedBox(height: 16),
             const Text('La cartera camina con quien cobra.'),
             const SizedBox(height: 28),
             TextField(

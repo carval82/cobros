@@ -16,7 +16,7 @@ use Illuminate\View\View;
 
 class EmpresaController extends Controller
 {
-    public function index(): View|RedirectResponse
+    public function index(Request $request): View|RedirectResponse
     {
         if (! auth()->user()->es_maestro) {
             $propia = Empresa::query()->find(auth()->user()->empresa_id);
@@ -28,9 +28,52 @@ class EmpresaController extends Controller
             return redirect()->route('dashboard');
         }
 
+        $busqueda = trim((string) $request->input('q'));
+        $estado = (string) $request->input('estado');
+        $plan = (string) $request->input('plan');
+
+        $consulta = Empresa::query()->orderByDesc('created_at');
+
+        if ($busqueda !== '') {
+            $consulta->where(function ($q) use ($busqueda) {
+                $q->where('nombre', 'like', "%{$busqueda}%")
+                    ->orWhere('email', 'like', "%{$busqueda}%")
+                    ->orWhere('slug', 'like', "%{$busqueda}%");
+            });
+        }
+
+        if ($estado === 'activas') {
+            $consulta->where('activo', true)->where(function ($q) {
+                $q->whereNull('fecha_vencimiento')->orWhere('fecha_vencimiento', '>=', now());
+            });
+        } elseif ($estado === 'inactivas') {
+            $consulta->where('activo', false);
+        } elseif ($estado === 'vencidas') {
+            $consulta->whereNotNull('fecha_vencimiento')->where('fecha_vencimiento', '<', now());
+        }
+
+        if (in_array($plan, ['demo', 'basico', 'premium', 'enterprise'], true)) {
+            $consulta->where('plan', $plan);
+        }
+
         return view('empresas.index', [
-            'empresas' => Empresa::query()->orderBy('nombre')->get(),
+            'empresas' => $consulta->get(),
             'activa' => session('empresa_id'),
+            'busqueda' => $busqueda,
+            'estado' => $estado,
+            'plan' => $plan,
+            'stats' => [
+                'total' => Empresa::query()->count(),
+                'activas' => Empresa::query()->where('activo', true)->where(function ($q) {
+                    $q->whereNull('fecha_vencimiento')->orWhere('fecha_vencimiento', '>=', now());
+                })->count(),
+                'inactivas' => Empresa::query()->where('activo', false)->count(),
+                'vencidas' => Empresa::query()->whereNotNull('fecha_vencimiento')->where('fecha_vencimiento', '<', now())->count(),
+                'este_mes' => Empresa::query()
+                    ->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year)
+                    ->count(),
+            ],
         ]);
     }
 

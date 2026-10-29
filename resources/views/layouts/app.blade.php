@@ -3,18 +3,15 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('titulo', 'Cobros')</title>
-    <link rel="stylesheet" href="{{ asset('css/cobros.css') }}">
+    <title>@yield('titulo', 'Cobras')</title>
+    <link rel="icon" href="{{ asset('favicon.ico') }}">
+    <link rel="stylesheet" href="{{ asset('css/cobros.css') }}?v={{ filemtime(public_path('css/cobros.css')) }}">
 </head>
 <body>
     <div class="app">
         <aside class="side">
-            <a class="marca" href="{{ cobro_route('dashboard') }}">
-                <span class="marca-sigla">Cb</span>
-                <span>
-                    <strong>Cobros</strong>
-                    <small>Ruta de caja</small>
-                </span>
+            <a class="marca" href="{{ auth()->user()->es_maestro ? route('empresas.index') : cobro_route('dashboard') }}">
+                <img class="marca-logo" src="{{ asset('image/cobras.png') }}" alt="Cobras, soluciones en cobranzas">
             </a>
             <nav>
                 @if (auth()->user()->es_maestro)
