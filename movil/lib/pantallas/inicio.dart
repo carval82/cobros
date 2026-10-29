@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../formato.dart';
+import '../piezas.dart';
 import '../servicios/cobros_api.dart';
 import '../servicios/sesion_local.dart';
 import 'acerca.dart';
@@ -107,15 +108,37 @@ class _Mas extends StatelessWidget {
     final demo = sesion['demo'] == true;
 
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
       children: [
-        Text(sesion['nombre']?.toString() ?? '', style: Theme.of(context).textTheme.headlineSmall),
-        Text(_etiqueta(sesion['rol']?.toString() ?? '')),
-        if (direccion != null && direccion.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          const Text('Dirección de la empresa'),
-          SelectableText(direccion),
-        ],
+        Lamina(
+          relleno: tinta,
+          child: Row(
+            children: [
+              Monograma(sesion['nombre']?.toString() ?? '', oscuro: true),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(sesion['nombre']?.toString() ?? '', style: const TextStyle(color: senal, fontSize: 22, fontWeight: FontWeight.w800)),
+                    Text(_etiqueta(sesion['rol']?.toString() ?? ''), style: const TextStyle(color: Color(0xFFCBB892))),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (direccion != null && direccion.isNotEmpty)
+          Lamina(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Dirección de la empresa', style: TextStyle(color: muted, fontSize: 12)),
+                const SizedBox(height: 4),
+                SelectableText(direccion, style: const TextStyle(fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
         if (demo) ...[
           const SizedBox(height: 12),
           Text('Versión demo: hasta ${sesion['limite_demo']} préstamos. La clave se pega en Acerca de.'),

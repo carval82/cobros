@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../formato.dart';
+import '../piezas.dart';
 import '../servicios/cobros_api.dart';
 import '../servicios/ubicacion.dart';
 import 'cliente_form.dart';
@@ -89,39 +90,49 @@ class _ClienteVistaState extends State<ClienteVista> {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
         children: [
-          if (direccion.isNotEmpty) Text(direccion, style: Theme.of(context).textTheme.titleMedium),
-          if (telefono.isNotEmpty)
-            TextButton.icon(
-              onPressed: () => llamar(telefono),
-              icon: const Icon(Icons.phone),
-              label: Text(telefono),
+          Lamina(
+            relleno: tinta,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Monograma(mapa['nombre']?.toString() ?? '', oscuro: true),
+                const SizedBox(height: 12),
+                Text(direccion.isEmpty ? 'Sin dirección de cobro' : direccion, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+                if (telefono.isNotEmpty)
+                  TextButton.icon(
+                    onPressed: () => llamar(telefono),
+                    icon: const Icon(Icons.phone, color: senal),
+                    label: Text(telefono, style: const TextStyle(color: senal)),
+                  ),
+                Text(lat == null || lng == null ? 'Sin coordenadas' : '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}', style: const TextStyle(color: Color(0xFFCBB892))),
+                const SizedBox(height: 12),
+                if (widget.puedeEscribir)
+                  FilledButton.icon(
+                    onPressed: _ocupado ? null : _marcar,
+                    icon: const Icon(Icons.my_location),
+                    label: const Text('Tomar coordenadas aquí'),
+                  ),
+                if (lat != null && lng != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(foregroundColor: senal, side: const BorderSide(color: senal)),
+                      onPressed: () => abrirDestino(lat, lng),
+                      icon: const Icon(Icons.navigation),
+                      label: const Text('Cómo llegar'),
+                    ),
+                  ),
+              ],
             ),
-          Text(lat == null || lng == null ? 'Sin coordenadas' : '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}'),
-          const SizedBox(height: 8),
-          if (widget.puedeEscribir)
-            OutlinedButton.icon(
-              onPressed: _ocupado ? null : _marcar,
-              icon: const Icon(Icons.my_location),
-              label: const Text('Tomar coordenadas aquí'),
-            ),
-          if (lat != null && lng != null)
-            TextButton.icon(
-              onPressed: () => abrirDestino(lat, lng),
-              icon: const Icon(Icons.navigation),
-              label: const Text('Cómo llegar'),
-            ),
-          const SizedBox(height: 16),
-          Text('Préstamos', style: Theme.of(context).textTheme.titleMedium),
-          if (prestamos.isEmpty) const Text('Este cliente todavía no tiene préstamos.'),
+          ),
+          const Titulo('PRÉSTAMOS'),
+          if (prestamos.isEmpty) const Text('Este cliente todavía no tiene préstamos.', style: TextStyle(color: muted)),
           for (final item in prestamos)
             if (item is Map)
-              Card(
-                color: const Color(0xFFFFFAF2),
-                child: ListTile(
-                  title: Text('${item['frecuencia']} · ${item['estado']}'),
-                  subtitle: Text('Saldo ${pesos(item['saldo'])} de ${pesos(item['total'])}'),
+              Lamina(
+                child: InkWell(
                   onTap: () async {
                     await Navigator.of(context).push(
                       MaterialPageRoute(
@@ -130,6 +141,27 @@ class _ClienteVistaState extends State<ClienteVista> {
                     );
                     await _cargar();
                   },
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('${item['frecuencia']}', style: const TextStyle(fontWeight: FontWeight.w800)),
+                            Text('De ${pesos(item['total'])}', style: const TextStyle(color: muted)),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(pesos(item['saldo']), style: const TextStyle(fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 4),
+                          Pastilla('${item['estado']}', tono: tonoEstado('${item['estado']}')),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
           if (widget.puedePrestamos) ...[
@@ -150,10 +182,7 @@ class _ClienteVistaState extends State<ClienteVista> {
               child: const Text('Nuevo préstamo'),
             ),
           ],
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            Text(_error!, style: const TextStyle(color: Color(0xFFA32632))),
-          ],
+          if (_error != null) Text(_error!, style: const TextStyle(color: peligro)),
         ],
       ),
     );

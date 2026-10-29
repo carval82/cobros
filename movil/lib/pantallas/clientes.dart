@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../formato.dart';
+import '../piezas.dart';
 import '../servicios/cobros_api.dart';
 import 'cliente.dart';
 import 'cliente_form.dart';
@@ -74,21 +75,11 @@ class _ClientesState extends State<Clientes> {
                     child: ListView(
                       padding: const EdgeInsets.all(16),
                       children: [
-                        if (_lista.isEmpty) const Text('Todavía no hay clientes.'),
+                        if (_lista.isEmpty) const Text('Todavía no hay clientes.', style: TextStyle(color: muted)),
                         for (final item in _lista)
                           if (item is Map)
-                            Card(
-                              color: const Color(0xFFFFFAF2),
-                              child: ListTile(
-                                title: Text(item['nombre']?.toString() ?? ''),
-                                subtitle: Text(
-                                  [
-                                    if ((item['direccion']?.toString() ?? '').isNotEmpty) item['direccion'].toString(),
-                                    if ((item['telefono']?.toString() ?? '').isNotEmpty) item['telefono'].toString(),
-                                    'Saldo ${pesos(item['saldo'])}',
-                                    numero(item['latitud']) == null ? 'Sin GPS' : 'En el mapa',
-                                  ].join('\n'),
-                                ),
+                            Lamina(
+                              child: InkWell(
                                 onTap: () async {
                                   await Navigator.of(context).push(
                                     MaterialPageRoute(
@@ -102,10 +93,35 @@ class _ClientesState extends State<Clientes> {
                                   );
                                   await _cargar();
                                 },
+                                child: Row(
+                                  children: [
+                                    Monograma(item['nombre']?.toString() ?? ''),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(item['nombre']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.w800)),
+                                          if ((item['direccion']?.toString() ?? '').isNotEmpty)
+                                            Text(item['direccion'].toString(), style: const TextStyle(color: muted)),
+                                          const SizedBox(height: 6),
+                                          Wrap(
+                                            spacing: 6,
+                                            runSpacing: 6,
+                                            children: [
+                                              Pastilla(pesos(item['saldo'])),
+                                              Pastilla(numero(item['latitud']) == null ? 'Sin GPS' : 'En el mapa', tono: numero(item['latitud']) == null ? peligro : ok),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(Icons.chevron_right, color: muted),
+                                  ],
+                                ),
                               ),
                             ),
-                        if (_error != null)
-                          Text(_error!, style: const TextStyle(color: Color(0xFFA32632))),
+                        if (_error != null) Text(_error!, style: const TextStyle(color: peligro)),
                       ],
                     ),
                   ),

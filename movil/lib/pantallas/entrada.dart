@@ -122,8 +122,18 @@ class _EntradaState extends State<Entrada> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 12),
-            Image.asset('assets/cobras.png', height: 160),
-            const SizedBox(height: 12),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: const [BoxShadow(color: Color(0x141C140C), blurRadius: 18, offset: Offset(0, 8))],
+                ),
+                child: Image.asset('assets/cobras.png', height: 120),
+              ),
+            ),
+            const SizedBox(height: 16),
             Text(
               _crear ? 'Crea tu empresa' : 'Entra a tu empresa',
               style: Theme.of(context).textTheme.headlineMedium,

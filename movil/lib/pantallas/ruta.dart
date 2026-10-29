@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../formato.dart';
+import '../piezas.dart';
 import '../servicios/cobros_api.dart';
 import '../servicios/ubicacion.dart';
 import 'prestamo.dart';
@@ -83,13 +84,19 @@ class _RutaDiaState extends State<RutaDia> {
     return RefreshIndicator(
       onRefresh: () => _cargar(origen: _origen),
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
         children: [
-          Text(
-            '${resumen['paradas'] ?? 0} paradas · ${pesos(resumen['saldo'])} · ${resumen['sin_gps'] ?? 0} sin GPS',
-            style: Theme.of(context).textTheme.titleMedium,
+          Lamina(
+            relleno: tinta,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Ruta de hoy', style: TextStyle(color: Color(0xFFCBB892), fontSize: 13)),
+                Text(pesos(resumen['saldo']), style: const TextStyle(color: senal, fontSize: 32, fontWeight: FontWeight.w800)),
+                Text('${resumen['paradas'] ?? 0} paradas · ${resumen['sin_gps'] ?? 0} sin GPS', style: const TextStyle(color: Colors.white)),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
           FilledButton.icon(
             onPressed: _desdeAqui,
             icon: const Icon(Icons.my_location),
@@ -195,30 +202,46 @@ class _Parada extends StatelessWidget {
     final direccion = item['direccion']?.toString() ?? '';
     final telefono = item['telefono']?.toString() ?? '';
 
-    return Card(
-      color: const Color(0xFFFFFAF2),
-      margin: const EdgeInsets.only(top: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('${item['orden']}. ${item['nombre']}', style: Theme.of(context).textTheme.titleMedium),
-            if (direccion.isNotEmpty) Text(direccion),
-            if (direccion.isEmpty) const Text('Sin dirección escrita'),
-            Text('${item['cuotas']} cuota(s) · ${pesos(item['saldo'])}${item['atraso'] == true ? ' · atrasado' : ''}'),
-            if (lat == null) const Text('Sin GPS') else Text('${lat.toStringAsFixed(5)}, ${lng!.toStringAsFixed(5)}'),
-            Wrap(
-              spacing: 8,
-              children: [
-                TextButton(onPressed: onCobrar, child: const Text('Cobrar')),
-                if (lat != null) TextButton(onPressed: () => abrirDestino(lat, lng!), child: const Text('Ir')),
-                if (telefono.isNotEmpty) TextButton(onPressed: () => llamar(telefono), child: const Text('Llamar')),
-                if (puedeEscribir) TextButton(onPressed: onMarcar, child: const Text('Tomar GPS')),
-              ],
-            ),
-          ],
-        ),
+    return Lamina(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Monograma('${item['orden']}'),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item['nombre']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                    Text(direccion.isEmpty ? 'Sin dirección escrita' : direccion, style: const TextStyle(color: muted)),
+                  ],
+                ),
+              ),
+              Text(pesos(item['saldo']), style: const TextStyle(fontWeight: FontWeight.w800)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            children: [
+              Pastilla('${item['cuotas']} cuota(s)'),
+              if (item['atraso'] == true) const Pastilla('Atrasado', tono: peligro),
+              if (lat == null) const Pastilla('Sin GPS', tono: peligro) else const Pastilla('En el mapa', tono: ok),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              FilledButton(onPressed: onCobrar, child: const Text('Cobrar')),
+              if (lat != null) OutlinedButton(onPressed: () => abrirDestino(lat, lng!), child: const Text('Ir')),
+              if (telefono.isNotEmpty) OutlinedButton(onPressed: () => llamar(telefono), child: const Text('Llamar')),
+              if (puedeEscribir) OutlinedButton(onPressed: onMarcar, child: const Text('Tomar GPS')),
+            ],
+          ),
+        ],
       ),
     );
   }

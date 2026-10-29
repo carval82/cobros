@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../formato.dart';
+import '../piezas.dart';
 import '../servicios/cobros_api.dart';
 import '../servicios/ubicacion.dart';
 import 'prestamo.dart';
@@ -59,97 +60,84 @@ class _HoyState extends State<Hoy> {
     return RefreshIndicator(
       onRefresh: _cargar,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
         children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 1.55,
             children: [
-              _Cifra(titulo: 'Cobrar hoy', valor: pesos(datos?['cobrar_hoy'])),
-              _Cifra(titulo: 'Mora', valor: pesos(datos?['mora'])),
-              _Cifra(titulo: 'Cobrado hoy', valor: pesos(datos?['cobrado_hoy'])),
-              _Cifra(titulo: 'Cartera', valor: pesos(datos?['cartera'])),
+              Cifra(titulo: 'Cobrar hoy', valor: pesos(datos?['cobrar_hoy']), destacada: true),
+              Cifra(titulo: 'Mora', valor: pesos(datos?['mora']), alerta: entero(datos?['mora']) > 0),
+              Cifra(titulo: 'Cobrado hoy', valor: pesos(datos?['cobrado_hoy'])),
+              Cifra(titulo: 'Cartera', valor: pesos(datos?['cartera'])),
             ],
           ),
-          const SizedBox(height: 16),
-          Text('Para hoy', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          if (hoy.isEmpty) const Text('No hay cuotas que venzan hoy.'),
+          const Titulo('PARA HOY'),
+          if (hoy.isEmpty) const Text('No hay cuotas que venzan hoy.', style: TextStyle(color: muted)),
           for (final item in hoy)
             if (item is Map) _CuotaTile(item: item, onTap: () => _abrir(entero(item['prestamo_id']))),
-          const SizedBox(height: 16),
-          Text('Atrasados', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          if (atrasadas.isEmpty) const Text('Nadie está en mora.'),
+          const Titulo('ATRASADOS'),
+          if (atrasadas.isEmpty) const Text('Nadie está en mora.', style: TextStyle(color: muted)),
           for (final item in atrasadas)
-            if (item is Map) _CuotaTile(item: item, onTap: () => _abrir(entero(item['prestamo_id']))),
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            Text(_error!, style: const TextStyle(color: Color(0xFFA32632))),
-          ],
+            if (item is Map) _CuotaTile(item: item, onTap: () => _abrir(entero(item['prestamo_id'])), mora: true),
+          if (_error != null) Text(_error!, style: const TextStyle(color: peligro)),
         ],
       ),
     );
   }
 }
 
-class _Cifra extends StatelessWidget {
-  const _Cifra({required this.titulo, required this.valor});
-
-  final String titulo;
-  final String valor;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 156,
-      child: Card(
-        color: const Color(0xFFFFFAF2),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(titulo),
-              const SizedBox(height: 4),
-              Text(valor, style: Theme.of(context).textTheme.titleMedium),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _CuotaTile extends StatelessWidget {
-  const _CuotaTile({required this.item, required this.onTap});
+  const _CuotaTile({required this.item, required this.onTap, this.mora = false});
 
   final Map item;
   final VoidCallback onTap;
+  final bool mora;
 
   @override
   Widget build(BuildContext context) {
-    final direccion = item['direccion']?.toString();
+    final nombre = item['cliente']?.toString() ?? '';
+    final direccion = item['direccion']?.toString() ?? '';
     final lat = numero(item['latitud']);
     final lng = numero(item['longitud']);
-    return Card(
-      color: const Color(0xFFFFFAF2),
-      child: ListTile(
+    return Lamina(
+      child: InkWell(
         onTap: onTap,
-        title: Text(item['cliente']?.toString() ?? ''),
-        subtitle: Text(
-          [
-            if (direccion != null && direccion.isNotEmpty) direccion,
-            'Cuota ${item['numero']} · ${pesos(item['saldo'])}',
-          ].join('\n'),
-        ),
-        trailing: lat == null || lng == null
-            ? const Icon(Icons.chevron_right)
-            : IconButton(
-                tooltip: 'Ir',
-                onPressed: () => abrirDestino(lat, lng),
-                icon: const Icon(Icons.navigation),
+        child: Row(
+          children: [
+            Monograma(nombre),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(nombre, style: const TextStyle(fontWeight: FontWeight.w800)),
+                  if (direccion.isNotEmpty) Text(direccion, style: const TextStyle(color: muted)),
+                  const SizedBox(height: 6),
+                  Pastilla(mora ? 'Atrasada · cuota ${item['numero']}' : 'Cuota ${item['numero']}', tono: mora ? peligro : tinta),
+                ],
               ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(pesos(item['saldo']), style: const TextStyle(fontWeight: FontWeight.w800)),
+                if (lat != null && lng != null)
+                  IconButton(
+                    tooltip: 'Ir',
+                    onPressed: () => abrirDestino(lat, lng),
+                    icon: const Icon(Icons.navigation, color: oro),
+                  )
+                else
+                  const Icon(Icons.chevron_right, color: muted),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
