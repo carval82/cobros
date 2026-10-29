@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../formato.dart';
 import '../servicios/cobros_api.dart';
+import '../servicios/sesion_local.dart';
 import 'acerca.dart';
+import 'entrada.dart';
 import 'clientes.dart';
 import 'hoy.dart';
 import 'ruta.dart';
@@ -31,6 +33,7 @@ class _InicioState extends State<Inicio> {
   Future<void> _cargar() async {
     try {
       final datos = await widget.api.sesion();
+      await guardarConfiguracion(widget.api, correo: datos['correo']?.toString());
       if (mounted) setState(() => _sesion = datos);
     } catch (e) {
       if (mounted) setState(() => _error = textoError(e));
@@ -130,6 +133,17 @@ class _Mas extends StatelessWidget {
             Navigator.of(context).push(MaterialPageRoute(builder: (_) => Acerca(api: api)));
           },
           child: const Text('Acerca de y activación'),
+        ),
+        TextButton(
+          onPressed: () async {
+            await olvidarSesion();
+            if (!context.mounted) return;
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const Entrada()),
+              (_) => false,
+            );
+          },
+          child: const Text('Salir'),
         ),
       ],
     );

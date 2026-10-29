@@ -29,6 +29,7 @@
                         <a href="{{ cobro_route('usuarios.index') }}" @class(['active' => request()->routeIs('usuarios.*', 'tenant.usuarios.*')])>Usuarios</a>
                     @endif
                 @endif
+                <a href="{{ route('app.movil') }}" @class(['active' => request()->routeIs('app.movil')])>App del celular</a>
                 <a href="{{ cobro_route('acerca') }}" @class(['active' => request()->routeIs('acerca', 'tenant.acerca')])>Acerca de</a>
             </nav>
             <div class="sesion">

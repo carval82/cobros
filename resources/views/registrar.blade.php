@@ -27,4 +27,5 @@
         <button class="btn" type="submit">Crear empresa</button>
     </form>
     <p class="ayuda"><a href="{{ route('login') }}">Ya tengo empresa</a></p>
+    <p class="ayuda"><a href="{{ route('app.movil') }}">Configurar y bajar la app</a></p>
 @endsection

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'pantallas/entrada.dart';
+import 'pantallas/puerta.dart';
 import 'tema.dart';
 
 void main() {
@@ -17,7 +17,7 @@ class CobrosApp extends StatelessWidget {
       title: 'Cobras',
       debugShowCheckedModeBanner: false,
       theme: temaCobros(),
-      home: const Entrada(),
+      home: const Puerta(),
     );
   }
 }

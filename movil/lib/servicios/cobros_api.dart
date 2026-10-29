@@ -10,6 +10,14 @@ class CobrosApi {
   String? token;
   final Map<String, String> _galletas = {};
 
+  Map<String, String> get galletas => Map.unmodifiable(_galletas);
+
+  void restaurarGalletas(Map<String, String> galletas) {
+    _galletas
+      ..clear()
+      ..addAll(galletas);
+  }
+
   String get _prefijo {
     final id = tenant;
     if (id == null || id.isEmpty) return '';
@@ -47,6 +55,7 @@ class CobrosApi {
       '_token': token,
       'email': email,
       'password': clave,
+      'recordar': '1',
     });
     final lugar = respuesta.headers['location'] ?? '';
     if (respuesta.statusCode == 302 && !lugar.contains('/login')) {

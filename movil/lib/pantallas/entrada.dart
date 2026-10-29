@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../servicios/cobros_api.dart';
+import '../servicios/sesion_local.dart';
 import 'inicio.dart';
 
 class Entrada extends StatefulWidget {
@@ -33,9 +34,14 @@ class _EntradaState extends State<Entrada> {
     final prefs = await SharedPreferences.getInstance();
     final servidor = prefs.getString('servidor');
     final direccion = prefs.getString('direccion');
+    final correo = prefs.getString('correo');
     if (!mounted) return;
     if (servidor != null && servidor.isNotEmpty) _servidor.text = servidor;
     if (direccion != null) _direccion.text = direccion;
+    if (correo != null) _correo.text = correo;
+    if ((direccion != null && direccion.isNotEmpty) || (correo != null && correo.isNotEmpty)) {
+      setState(() => _crear = false);
+    }
   }
 
   @override
@@ -53,11 +59,7 @@ class _EntradaState extends State<Entrada> {
   String get _raiz => _servidor.text.trim().replaceAll(RegExp(r'/+$'), '');
 
   Future<void> _abrir(CobrosApi api) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('servidor', _raiz);
-    if (api.tenant != null) {
-      await prefs.setString('direccion', '$_raiz/tenant/${api.tenant}/login');
-    }
+    await guardarConfiguracion(api, correo: _correo.text);
     if (!mounted) return;
     await Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => Inicio(api: api)),

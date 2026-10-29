@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AppMovilController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\DashboardController;
@@ -46,6 +47,7 @@ $cartera = function () {
 };
 
 Route::get('/', [RegistroEmpresaController::class, 'portada'])->name('dashboard');
+Route::get('/app', [AppMovilController::class, 'index'])->name('app.movil');
 Route::post('/registrar', [RegistroEmpresaController::class, 'store'])->middleware(['guest', 'throttle:5,1'])->name('registrar.store');
 
 Route::middleware('guest')->group(function () {

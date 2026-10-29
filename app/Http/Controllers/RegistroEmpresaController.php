@@ -92,7 +92,7 @@ class RegistroEmpresaController extends Controller
                 ->withInput();
         }
 
-        Auth::login($administrador);
+        Auth::login($administrador, true);
         $request->session()->regenerate();
         $empresa->refresh();
 

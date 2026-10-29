@@ -42,4 +42,5 @@
     @unless ($empresaTenant)
         <p class="ayuda"><a href="{{ route('dashboard') }}">Crear una empresa</a></p>
     @endunless
+    <p class="ayuda"><a href="{{ route('app.movil') }}">Configurar y bajar la app</a></p>
 @endsection
