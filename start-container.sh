@@ -10,6 +10,8 @@ if [ "$RAILPACK_SKIP_MIGRATIONS" != "true" ]; then
   php artisan migrate --force
 fi
 
+php artisan cobros:usuario-maestro
+
 php artisan storage:link
 php artisan optimize
 

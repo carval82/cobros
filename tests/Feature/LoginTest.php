@@ -47,6 +47,23 @@ class LoginTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_el_usuario_maestro_puede_entrar(): void
+    {
+        $this->artisan('cobros:usuario-maestro')->assertSuccessful();
+
+        $this->get('/login')->assertOk()->assertSee('Entrar')->assertDontSee('Crea la primera cuenta');
+
+        $this->post('/login', [
+            'email' => 'pcapacho24@gmail.com',
+            'password' => 'anaval33',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertAuthenticated();
+
+        $this->artisan('cobros:usuario-maestro')->assertSuccessful();
+        $this->assertSame(1, User::query()->count());
+    }
+
     public function test_entra_y_puede_salir(): void
     {
         User::factory()->create([
