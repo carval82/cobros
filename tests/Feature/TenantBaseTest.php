@@ -108,6 +108,33 @@ class TenantBaseTest extends TestCase
             ->assertRedirect(route('tenant.dashboard', ['tenant' => $norte->uuid]));
     }
 
+    public function test_la_base_de_la_empresa_usa_el_host_de_la_url_central(): void
+    {
+        config([
+            'tenencia.central' => 'central',
+            'database.connections.central' => [
+                'driver' => 'mysql',
+                'url' => 'mysql://usuario:secreto@db.railway.internal:3306/cobros',
+                'host' => '127.0.0.1',
+                'port' => '3306',
+                'database' => 'laravel',
+                'username' => 'root',
+                'password' => '',
+            ],
+        ]);
+
+        Tenencia::configurar('cobros_e2');
+
+        $tenant = config('database.connections.tenant');
+
+        $this->assertSame('db.railway.internal', $tenant['host']);
+        $this->assertSame('3306', (string) $tenant['port']);
+        $this->assertSame('usuario', $tenant['username']);
+        $this->assertSame('secreto', $tenant['password']);
+        $this->assertSame('cobros_e2', $tenant['database']);
+        $this->assertNull($tenant['url']);
+    }
+
     public function test_la_cache_no_consulta_la_base_de_la_empresa(): void
     {
         $empresa = Empresa::create(['nombre' => 'Norte', 'slug' => 'norte', 'activo' => true, 'fecha_vencimiento' => now()->addDays(30)]);

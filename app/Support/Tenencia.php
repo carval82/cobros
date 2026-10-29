@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Empresa;
+use Illuminate\Support\ConfigurationUrlParser;
 use Illuminate\Support\Facades\DB;
 
 class Tenencia
@@ -52,6 +53,11 @@ class Tenencia
     {
         $central = config('tenencia.central', config('database.default'));
         $base = config('database.connections.'.$central);
+
+        if (! empty($base['url'])) {
+            $base = (new ConfigurationUrlParser)->parseConfiguration($base);
+        }
+
         $base['url'] = null;
 
         if (($base['driver'] ?? '') === 'sqlite') {
