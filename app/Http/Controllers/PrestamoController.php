@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Cliente;
 use App\Models\Cuota;
+use App\Models\Pago;
 use App\Models\Prestamo;
 use App\Services\PlanPagos;
 use App\Services\PrestamoService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -36,7 +38,7 @@ class PrestamoController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $datos = $request->validate([
             'cliente_id' => ['required', 'exists:clientes,id'],
@@ -66,6 +68,13 @@ class PrestamoController extends Controller
             $datos['nota'] ?? null
         );
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'id' => $prestamo->id,
+                'token' => csrf_token(),
+            ]);
+        }
+
         return redirect()
             ->to(cobro_route('prestamos.show', $prestamo))
             ->with('ok', 'Préstamo creado. El plan de pagos ya tiene fechas y cuotas.');
@@ -85,7 +94,64 @@ class PrestamoController extends Controller
         return view('prestamos.show', ['prestamo' => $prestamo]);
     }
 
-    public function pagar(Request $request, Prestamo $prestamo): RedirectResponse
+    public function datos(Prestamo $prestamo): JsonResponse
+    {
+        $this->prestamos->sincronizarCartera();
+
+        $prestamo->load([
+            'cliente',
+            'cuotas' => fn ($q) => $q->orderBy('numero'),
+            'pagos' => fn ($q) => $q->latest('fecha')->latest('id'),
+        ]);
+        $prestamo->cuotas->each->setRelation('prestamo', $prestamo);
+        $usuario = auth()->user();
+
+        return response()->json([
+            'token' => csrf_token(),
+            'cobros' => $usuario->puede('cobros.registrar'),
+            'anular' => $usuario->puede('prestamos.anular'),
+            'prestamo' => [
+                'id' => $prestamo->id,
+                'cliente_id' => $prestamo->cliente_id,
+                'cliente' => $prestamo->cliente->nombre,
+                'direccion' => $prestamo->cliente->direccion,
+                'telefono' => $prestamo->cliente->telefono,
+                'latitud' => $prestamo->cliente->latitud,
+                'longitud' => $prestamo->cliente->longitud,
+                'capital' => $prestamo->capital,
+                'porcentaje' => $prestamo->porcentaje,
+                'interes' => $prestamo->interes,
+                'total' => $prestamo->total,
+                'saldo' => $prestamo->saldo(),
+                'estado' => $prestamo->estado,
+                'frecuencia' => $prestamo->frecuencia,
+                'frecuencia_nombre' => $prestamo->frecuenciaNombre(),
+                'cuotas' => $prestamo->numero_cuotas,
+                'fecha_primer_pago' => $prestamo->fecha_primer_pago?->toDateString(),
+                'nota' => $prestamo->nota,
+                'motivo_detencion' => $prestamo->motivo_detencion,
+            ],
+            'cuotas' => $prestamo->cuotas->map(fn (Cuota $cuota) => [
+                'id' => $cuota->id,
+                'numero' => $cuota->numero,
+                'fecha' => $cuota->fecha_vencimiento->toDateString(),
+                'valor' => $cuota->valor,
+                'pagado' => $cuota->pagado,
+                'saldo' => $cuota->saldo,
+                'estado' => $cuota->estadoVisible(),
+            ])->values(),
+            'pagos' => $prestamo->pagos->map(fn (Pago $pago) => [
+                'id' => $pago->id,
+                'fecha' => $pago->fecha->toDateString(),
+                'monto' => $pago->monto,
+                'nota' => $pago->nota,
+                'latitud' => $pago->latitud,
+                'longitud' => $pago->longitud,
+            ])->values(),
+        ]);
+    }
+
+    public function pagar(Request $request, Prestamo $prestamo): RedirectResponse|JsonResponse
     {
         $datos = $request->validate([
             'monto' => ['required', 'integer', 'min:1'],
@@ -114,10 +180,14 @@ class PrestamoController extends Controller
             $longitud
         );
 
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'token' => csrf_token()]);
+        }
+
         return back()->with('ok', 'Abono registrado.');
     }
 
-    public function detener(Request $request, Prestamo $prestamo): RedirectResponse
+    public function detener(Request $request, Prestamo $prestamo): RedirectResponse|JsonResponse
     {
         $datos = $request->validate([
             'motivo' => ['required', 'string', 'max:180'],
@@ -127,15 +197,23 @@ class PrestamoController extends Controller
 
         $this->prestamos->detener($prestamo, $datos['motivo']);
 
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'token' => csrf_token()]);
+        }
+
         return back()->with('ok', 'Cobro detenido. No suma mora mientras siga así.');
     }
 
-    public function reanudar(Prestamo $prestamo): RedirectResponse
+    public function reanudar(Request $request, Prestamo $prestamo): RedirectResponse|JsonResponse
     {
         $dias = $this->prestamos->reanudar($prestamo);
         $texto = $dias > 0
             ? "Cobro reanudado. Las cuotas pendientes se corrieron {$dias} días."
             : 'Cobro reanudado.';
+
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'mensaje' => $texto, 'token' => csrf_token()]);
+        }
 
         return back()->with('ok', $texto);
     }
@@ -184,7 +262,7 @@ class PrestamoController extends Controller
         return back()->with('ok', 'El mismo préstamo quedó refinanciado. El cliente no cambió.');
     }
 
-    public function anular(Request $request, Prestamo $prestamo): RedirectResponse
+    public function anular(Request $request, Prestamo $prestamo): RedirectResponse|JsonResponse
     {
         $datos = $request->validate([
             'motivo' => ['required', 'string', 'max:180'],
@@ -193,6 +271,10 @@ class PrestamoController extends Controller
         ]);
 
         $this->prestamos->anular($prestamo, $datos['motivo']);
+
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'token' => csrf_token()]);
+        }
 
         return back()->with('ok', 'Préstamo anulado. Ya no entra en la cartera.');
     }

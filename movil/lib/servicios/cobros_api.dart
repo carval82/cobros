@@ -7,6 +7,7 @@ class CobrosApi {
 
   final String raiz;
   String? tenant;
+  String? token;
   final Map<String, String> _galletas = {};
 
   String get _prefijo {
@@ -59,9 +60,10 @@ class CobrosApi {
   Future<Map<String, dynamic>> sesion() async {
     final respuesta = await _pedir('GET', '/sesion/datos', json: true);
     if (respuesta.statusCode != 200) {
-      throw Exception('No se pudo leer la sesión.');
+      throw Exception('No se pudo leer la sesión (${respuesta.statusCode}).');
     }
     final datos = _mapa(respuesta.body);
+    _tomarToken(datos);
     final id = datos['tenant']?.toString();
     if (id != null && id.isNotEmpty) tenant = id;
     return datos;
@@ -119,6 +121,133 @@ class CobrosApi {
     if (respuesta.statusCode >= 400) {
       throw Exception(_mensaje(respuesta));
     }
+  }
+
+  Future<Map<String, dynamic>> hoy() => _cartera('GET', '/hoy/datos');
+
+  Future<Map<String, dynamic>> clientes({String q = ''}) {
+    final consulta = q.trim().isEmpty ? '' : '?q=${Uri.encodeQueryComponent(q)}';
+    return _cartera('GET', '/clientes/datos$consulta');
+  }
+
+  Future<Map<String, dynamic>> cliente(int id) => _cartera('GET', '/clientes/$id/datos');
+
+  Future<Map<String, dynamic>> guardarCliente({
+    int? id,
+    required String nombre,
+    String? documento,
+    String? telefono,
+    String? direccion,
+    String? notas,
+  }) {
+    return _cartera(id == null ? 'POST' : 'PUT', id == null ? '/clientes' : '/clientes/$id', campos: {
+      '_token': token ?? '',
+      'nombre': nombre,
+      'documento': documento ?? '',
+      'telefono': telefono ?? '',
+      'direccion': direccion ?? '',
+      'notas': notas ?? '',
+    });
+  }
+
+  Future<void> ubicarCliente(int id, double latitud, double longitud) async {
+    await _cartera('POST', '/clientes/$id/ubicacion', campos: {
+      '_token': token ?? '',
+      'latitud': '$latitud',
+      'longitud': '$longitud',
+    });
+  }
+
+  Future<Map<String, dynamic>> prestamo(int id) => _cartera('GET', '/prestamos/$id/datos');
+
+  Future<int> crearPrestamo({
+    required int clienteId,
+    required int capital,
+    required String porcentaje,
+    required int cuotas,
+    required String frecuencia,
+    required String fecha,
+    String? nota,
+  }) async {
+    final datos = await _cartera('POST', '/prestamos', campos: {
+      '_token': token ?? '',
+      'cliente_id': '$clienteId',
+      'capital': '$capital',
+      'porcentaje': porcentaje,
+      'cuotas': '$cuotas',
+      'frecuencia': frecuencia,
+      'fecha_primer_pago': fecha,
+      'nota': nota ?? '',
+    });
+    return int.parse('${datos['id']}');
+  }
+
+  Future<void> pagar({
+    required int prestamoId,
+    required int monto,
+    required String fecha,
+    String? nota,
+    double? latitud,
+    double? longitud,
+  }) async {
+    await _cartera('POST', '/prestamos/$prestamoId/pagar', campos: {
+      '_token': token ?? '',
+      'monto': '$monto',
+      'fecha': fecha,
+      'nota': nota ?? '',
+      if (latitud != null) 'latitud': '$latitud',
+      if (longitud != null) 'longitud': '$longitud',
+    });
+  }
+
+  Future<void> detener(int prestamoId, String motivo) async {
+    await _cartera('POST', '/prestamos/$prestamoId/detener', campos: {
+      '_token': token ?? '',
+      'motivo': motivo,
+    });
+  }
+
+  Future<void> reanudar(int prestamoId) async {
+    await _cartera('POST', '/prestamos/$prestamoId/reanudar', campos: {
+      '_token': token ?? '',
+    });
+  }
+
+  Future<void> anular(int prestamoId, String motivo) async {
+    await _cartera('POST', '/prestamos/$prestamoId/anular', campos: {
+      '_token': token ?? '',
+      'motivo': motivo,
+    });
+  }
+
+  Future<Map<String, dynamic>> ruta({double? latitud, double? longitud}) {
+    final consulta = latitud == null || longitud == null ? '' : '?latitud=$latitud&longitud=$longitud';
+    return _cartera('GET', '/ruta/datos$consulta');
+  }
+
+  Future<Map<String, dynamic>> _cartera(String metodo, String ruta, {Map<String, String>? campos}) async {
+    if (tenant == null || tenant!.isEmpty) {
+      throw Exception('Entra con la dirección de la empresa.');
+    }
+    final respuesta = await _pedir(metodo, '$_prefijo$ruta', json: true, campos: campos);
+    if (respuesta.statusCode == 302) {
+      throw Exception('La licencia no deja operar. Actívala en Acerca de.');
+    }
+    if (respuesta.statusCode == 403) {
+      throw Exception('Tu rol no puede hacer eso.');
+    }
+    if (respuesta.statusCode >= 400) {
+      throw Exception(_mensaje(respuesta));
+    }
+    if (respuesta.body.isEmpty) return {};
+    final datos = _mapa(respuesta.body);
+    _tomarToken(datos);
+    return datos;
+  }
+
+  void _tomarToken(Map<String, dynamic> datos) {
+    final valor = datos['token']?.toString();
+    if (valor != null && valor.isNotEmpty) token = valor;
   }
 
   Future<String> _token(String ruta) async {

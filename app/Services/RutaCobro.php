@@ -36,6 +36,7 @@ class RutaCobro
 
             $paradas[] = [
                 'cliente_id' => $cliente->id,
+                'prestamo_id' => $primera->prestamo_id,
                 'nombre' => $cliente->nombre,
                 'direccion' => $cliente->direccion,
                 'telefono' => $cliente->telefono,

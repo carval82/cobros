@@ -33,6 +33,10 @@ class UsuarioController extends Controller
             'usuarios' => $usuario->puede('usuarios.gestionar'),
             'prestamos' => $usuario->puede('prestamos.crear'),
             'cobros' => $usuario->puede('cobros.registrar'),
+            'clientes' => $usuario->puede('clientes.escribir'),
+            'anular' => $usuario->puede('prestamos.anular'),
+            'demo' => $empresa ? ! $empresa->esCompleta() : false,
+            'limite_demo' => \App\Models\Empresa::LIMITE_DEMO,
             'token' => csrf_token(),
         ]);
     }

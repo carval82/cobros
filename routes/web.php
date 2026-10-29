@@ -11,18 +11,24 @@ use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
 $cartera = function () {
+    Route::get('/hoy/datos', [DashboardController::class, 'datos'])->name('hoy.datos');
     Route::get('/atrasados', [DashboardController::class, 'atrasados'])->name('atrasados');
     Route::get('/ruta', [RutaController::class, 'index'])->name('ruta');
+    Route::get('/ruta/datos', [RutaController::class, 'datos'])->name('ruta.datos');
 
+    Route::get('/clientes/datos', [ClienteController::class, 'datos'])->name('clientes.datos');
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
     Route::get('/clientes/crear', [ClienteController::class, 'create'])->name('clientes.create');
     Route::post('/clientes', [ClienteController::class, 'store'])->middleware('puede:clientes.escribir')->name('clientes.store');
+    Route::get('/clientes/{cliente}/datos', [ClienteController::class, 'mostrar'])->name('clientes.mostrar');
+    Route::post('/clientes/{cliente}/ubicacion', [ClienteController::class, 'ubicar'])->middleware('puede:clientes.escribir')->name('clientes.ubicar');
     Route::get('/clientes/{cliente}', [ClienteController::class, 'show'])->name('clientes.show');
     Route::get('/clientes/{cliente}/editar', [ClienteController::class, 'edit'])->name('clientes.edit');
     Route::put('/clientes/{cliente}', [ClienteController::class, 'update'])->middleware('puede:clientes.escribir')->name('clientes.update');
 
     Route::get('/prestamos/crear', [PrestamoController::class, 'create'])->name('prestamos.create');
     Route::post('/prestamos', [PrestamoController::class, 'store'])->middleware('puede:prestamos.crear')->name('prestamos.store');
+    Route::get('/prestamos/{prestamo}/datos', [PrestamoController::class, 'datos'])->name('prestamos.datos');
     Route::get('/prestamos/{prestamo}', [PrestamoController::class, 'show'])->name('prestamos.show');
     Route::post('/prestamos/{prestamo}/pagar', [PrestamoController::class, 'pagar'])->middleware('puede:cobros.registrar')->name('prestamos.pagar');
     Route::post('/prestamos/{prestamo}/detener', [PrestamoController::class, 'detener'])->middleware('puede:cobros.registrar')->name('prestamos.detener');

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../formato.dart';
 import '../servicios/cobros_api.dart';
 import 'acerca.dart';
+import 'clientes.dart';
+import 'hoy.dart';
+import 'ruta.dart';
 import 'usuarios.dart';
 
 class Inicio extends StatefulWidget {
@@ -16,6 +20,7 @@ class Inicio extends StatefulWidget {
 class _InicioState extends State<Inicio> {
   Map<String, dynamic>? _sesion;
   String? _error;
+  int _pestana = 0;
 
   @override
   void initState() {
@@ -28,70 +33,105 @@ class _InicioState extends State<Inicio> {
       final datos = await widget.api.sesion();
       if (mounted) setState(() => _sesion = datos);
     } catch (e) {
-      if (mounted) setState(() => _error = '$e'.replaceFirst('Exception: ', ''));
+      if (mounted) setState(() => _error = textoError(e));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final sesion = _sesion;
-    final rol = sesion?['rol']?.toString() ?? '';
+    final empresa = sesion?['empresa']?.toString();
+    final tenant = sesion?['tenant']?.toString() ?? '';
     final puedeUsuarios = sesion?['usuarios'] == true;
+    final puedeClientes = sesion?['clientes'] == true;
     final puedePrestamos = sesion?['prestamos'] == true;
-    final puedeCobros = sesion?['cobros'] == true;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(sesion?['empresa']?.toString() ?? 'Cobras'),
+        title: Text(empresa == null || empresa.isEmpty ? 'Cobras' : empresa),
         actions: [
           IconButton(
             tooltip: 'Acerca de',
             onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => Acerca(api: widget.api)),
-              );
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => Acerca(api: widget.api)));
             },
             icon: const Icon(Icons.info_outline),
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text(rol.isEmpty ? 'Cobras' : _etiqueta(rol), style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: 8),
-          Text(sesion?['nombre']?.toString() ?? 'Hoy', style: Theme.of(context).textTheme.headlineLarge),
-          if (sesion?['direccion'] != null) ...[
-            const SizedBox(height: 12),
-            SelectableText(sesion!['direccion'].toString()),
-          ],
-          const SizedBox(height: 16),
-          if (puedePrestamos)
-            const _Tarjeta(titulo: 'Préstamos', detalle: 'Puedes abrir préstamos de un cliente. Cada cobro queda a su nombre.'),
-          if (puedeCobros)
-            const _Tarjeta(titulo: 'Cobros', detalle: 'Registras el abono del día sobre el préstamo que corresponde.'),
-          if (!puedePrestamos && !puedeCobros && rol == 'consulta')
-            const _Tarjeta(titulo: 'Consulta', detalle: 'Este rol solo mira la cartera. No crea préstamos ni cobra.'),
-          if (rol == 'maestro')
-            const _Tarjeta(titulo: 'Maestro', detalle: 'Las empresas se crean en el panel de la web.'),
-          const _Tarjeta(titulo: 'Demo', detalle: 'Cinco préstamos. La clave en Acerca de abre la versión completa.'),
-          if (puedeUsuarios) ...[
-            const SizedBox(height: 8),
-            FilledButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => Usuarios(api: widget.api)),
-                );
-              },
-              child: const Text('Usuarios y roles'),
+      body: sesion == null
+          ? Center(child: _error == null ? const CircularProgressIndicator() : Padding(padding: const EdgeInsets.all(24), child: Text(_error!)))
+          : tenant.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text('Esta cuenta no está dentro de una empresa. Entra con la dirección /tenant/ que se generó al crearla.'),
+                )
+              : IndexedStack(
+                  index: _pestana,
+                  children: [
+                    Hoy(api: widget.api),
+                    Clientes(api: widget.api, puedeEscribir: puedeClientes, puedePrestamos: puedePrestamos),
+                    RutaDia(api: widget.api, puedeEscribir: puedeClientes),
+                    _Mas(api: widget.api, sesion: sesion, puedeUsuarios: puedeUsuarios),
+                  ],
+                ),
+      bottomNavigationBar: sesion == null || tenant.isEmpty
+          ? null
+          : NavigationBar(
+              selectedIndex: _pestana,
+              onDestinationSelected: (indice) => setState(() => _pestana = indice),
+              destinations: const [
+                NavigationDestination(icon: Icon(Icons.today), label: 'Hoy'),
+                NavigationDestination(icon: Icon(Icons.people), label: 'Clientes'),
+                NavigationDestination(icon: Icon(Icons.alt_route), label: 'Ruta'),
+                NavigationDestination(icon: Icon(Icons.more_horiz), label: 'Más'),
+              ],
             ),
-          ],
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            Text(_error!, style: const TextStyle(color: Color(0xFFA32632))),
-          ],
+    );
+  }
+}
+
+class _Mas extends StatelessWidget {
+  const _Mas({required this.api, required this.sesion, required this.puedeUsuarios});
+
+  final CobrosApi api;
+  final Map<String, dynamic> sesion;
+  final bool puedeUsuarios;
+
+  @override
+  Widget build(BuildContext context) {
+    final direccion = sesion['direccion']?.toString();
+    final demo = sesion['demo'] == true;
+
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        Text(sesion['nombre']?.toString() ?? '', style: Theme.of(context).textTheme.headlineSmall),
+        Text(_etiqueta(sesion['rol']?.toString() ?? '')),
+        if (direccion != null && direccion.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          const Text('Dirección de la empresa'),
+          SelectableText(direccion),
         ],
-      ),
+        if (demo) ...[
+          const SizedBox(height: 12),
+          Text('Versión demo: hasta ${sesion['limite_demo']} préstamos. La clave se pega en Acerca de.'),
+        ],
+        const SizedBox(height: 16),
+        if (puedeUsuarios)
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => Usuarios(api: api)));
+            },
+            child: const Text('Usuarios y roles'),
+          ),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (_) => Acerca(api: api)));
+          },
+          child: const Text('Acerca de y activación'),
+        ),
+      ],
     );
   }
 
@@ -108,24 +148,5 @@ class _InicioState extends State<Inicio> {
       default:
         return rol;
     }
-  }
-}
-
-class _Tarjeta extends StatelessWidget {
-  const _Tarjeta({required this.titulo, required this.detalle});
-
-  final String titulo;
-  final String detalle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      color: const Color(0xFFFFFAF2),
-      child: ListTile(
-        title: Text(titulo),
-        subtitle: Text(detalle),
-      ),
-    );
   }
 }
