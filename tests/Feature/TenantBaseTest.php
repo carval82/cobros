@@ -182,7 +182,7 @@ class TenantBaseTest extends TestCase
         $this->actingAs($maestro)
             ->withSession(['empresa_id' => $empresa->id])
             ->post('/licencia', ['codigo' => $codigo])
-            ->assertRedirect(route('dashboard'));
+            ->assertRedirect(route('acerca'));
 
         $empresa->refresh();
         $this->assertSame('basico', $empresa->plan);

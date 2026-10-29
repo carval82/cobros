@@ -8,6 +8,8 @@ use Illuminate\Support\Str;
 
 class Empresa extends Model
 {
+    public const LIMITE_DEMO = 5;
+
     protected $fillable = [
         'nombre',
         'uuid',
@@ -51,6 +53,11 @@ class Empresa extends Model
     public function getConnectionName(): ?string
     {
         return config('tenencia.central') ?: parent::getConnectionName();
+    }
+
+    public function esCompleta(): bool
+    {
+        return $this->licencia_activada_at !== null && $this->plan !== 'demo';
     }
 
     public function puedeOperar(): bool

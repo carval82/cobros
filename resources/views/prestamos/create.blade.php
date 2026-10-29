@@ -6,7 +6,10 @@
     <header class="encabezado">
         <div>
             <h1>Nuevo préstamo</h1>
-            <p class="ayuda">El porcentaje es el interés de todo el préstamo, no una tasa anual. 100.000 al 20% en 5 semanas quedan en 120.000 y la cuota es 24.000.</p>
+            <p class="ayuda">Siempre sale de un cliente. Ese cliente puede tener varios préstamos, y cada abono queda en uno solo. El porcentaje es el interés de todo el préstamo: 100.000 al 20% en 5 semanas quedan en 120.000.</p>
+            @if (! empty($demo))
+                <p class="ayuda">Versión demo: {{ $usados }} de {{ \App\Models\Empresa::LIMITE_DEMO }} préstamos. La completa se activa en Acerca de.</p>
+            @endif
         </div>
     </header>
 
@@ -16,17 +19,14 @@
                 @csrf
                 <label>Cliente
                     <select name="cliente_id" required>
-                        <option value="">Elegir</option>
+                        <option value="" @selected(! old('cliente_id', $clienteId))>Elegir cliente</option>
                         @foreach ($clientes as $cliente)
-                            <option value="{{ $cliente->id }}" @selected(old('cliente_id', $clienteId) == $cliente->id)>
+                            <option value="{{ $cliente->id }}" @selected((string) old('cliente_id', $clienteId) === (string) $cliente->id)>
                                 {{ $cliente->nombre }}
                             </option>
                         @endforeach
                     </select>
                 </label>
-                @if ($clientes->isEmpty())
-                    <p class="ayuda">Primero crea un cliente.</p>
-                @endif
                 <div class="fila-form">
                     <label>Capital prestado
                         <input id="capital" name="capital" type="number" min="1" step="1" value="{{ old('capital', 100000) }}" required>

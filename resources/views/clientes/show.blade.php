@@ -26,6 +26,7 @@
     <div class="dos">
         <section class="panel">
             <h2>Préstamos</h2>
+            <p class="ayuda">Este cliente puede tener varios. Cada abono pertenece a un solo préstamo y solo a su nombre.</p>
             @if ($cliente->prestamos->isEmpty())
                 <p class="vacio">Este cliente todavía no tiene préstamos.</p>
             @else

@@ -110,6 +110,99 @@ class PrestamoFlujoTest extends TestCase
         $this->assertSame('liquidado', $prestamo->fresh()->estado);
     }
 
+    public function test_no_abre_prestamo_sin_cliente_y_un_cliente_puede_tener_varios(): void
+    {
+        $this->get('/prestamos/crear')->assertRedirect(route('clientes.create'));
+
+        $this->post('/prestamos', [
+            'capital' => 100000,
+            'porcentaje' => 20,
+            'cuotas' => 4,
+            'frecuencia' => 'semanal',
+            'fecha_primer_pago' => '2026-11-02',
+        ])->assertSessionHasErrors('cliente_id');
+
+        $cliente = $this->cliente();
+
+        foreach ([50000, 80000] as $capital) {
+            $this->post('/prestamos', [
+                'cliente_id' => $cliente->id,
+                'capital' => $capital,
+                'porcentaje' => 20,
+                'cuotas' => 4,
+                'frecuencia' => 'semanal',
+                'fecha_primer_pago' => '2026-11-02',
+            ])->assertRedirect();
+        }
+
+        $this->assertSame(2, Prestamo::query()->where('cliente_id', $cliente->id)->count());
+    }
+
+    public function test_el_abono_queda_en_un_solo_cliente(): void
+    {
+        $prestamo = $this->prestamo();
+
+        $this->post('/prestamos/'.$prestamo->id.'/pagar', [
+            'monto' => 10000,
+            'fecha' => '2026-11-02',
+        ])->assertRedirect();
+
+        $pago = $prestamo->pagos()->first();
+        $this->assertNotNull($pago);
+        $this->assertSame((int) $prestamo->cliente_id, (int) $pago->cliente_id);
+    }
+
+    public function test_refinanciar_amplia_el_mismo_prestamo(): void
+    {
+        $prestamo = $this->prestamo();
+
+        $this->post('/prestamos/'.$prestamo->id.'/pagar', [
+            'monto' => 10000,
+            'fecha' => '2026-11-02',
+        ])->assertRedirect();
+
+        $this->post('/prestamos/'.$prestamo->id.'/refinanciar', [
+            'adicional' => 50000,
+            'porcentaje' => 20,
+            'cuotas' => 4,
+            'frecuencia' => 'semanal',
+            'fecha_primer_pago' => '2026-11-09',
+        ])->assertRedirect();
+
+        $prestamo->refresh();
+        $primera = $prestamo->cuotas()->orderBy('numero')->first();
+
+        $this->assertSame(150000, (int) $prestamo->capital);
+        $this->assertSame(192000, $prestamo->saldo());
+        $this->assertSame(0, (int) $primera->saldo);
+        $this->assertSame(10000, (int) $primera->pagado);
+        $this->assertSame((int) $prestamo->cliente_id, (int) $prestamo->pagos()->first()->cliente_id);
+        $this->assertDatabaseHas('movimientos', [
+            'prestamo_id' => $prestamo->id,
+            'tipo' => 'refinanciar',
+        ]);
+    }
+
+    public function test_no_refinancia_un_prestamo_sin_saldo(): void
+    {
+        $prestamo = $this->prestamo();
+
+        $this->post('/prestamos/'.$prestamo->id.'/pagar', [
+            'monto' => 120000,
+            'fecha' => '2026-11-02',
+        ])->assertRedirect();
+
+        $this->post('/prestamos/'.$prestamo->id.'/refinanciar', [
+            'adicional' => 10000,
+            'porcentaje' => 20,
+            'cuotas' => 4,
+            'frecuencia' => 'semanal',
+            'fecha_primer_pago' => '2026-11-09',
+        ])->assertSessionHasErrors('adicional');
+
+        $this->assertSame(100000, (int) $prestamo->fresh()->capital);
+    }
+
     private function cliente(): Cliente
     {
         $this->post('/clientes', [

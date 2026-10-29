@@ -27,6 +27,7 @@ $cartera = function () {
     Route::post('/prestamos/{prestamo}/detener', [PrestamoController::class, 'detener'])->name('prestamos.detener');
     Route::post('/prestamos/{prestamo}/reanudar', [PrestamoController::class, 'reanudar'])->name('prestamos.reanudar');
     Route::post('/prestamos/{prestamo}/anular', [PrestamoController::class, 'anular'])->name('prestamos.anular');
+    Route::post('/prestamos/{prestamo}/refinanciar', [PrestamoController::class, 'refinanciar'])->name('prestamos.refinanciar');
     Route::post('/cuotas/{cuota}/aplazar', [PrestamoController::class, 'aplazar'])->name('cuotas.aplazar');
 };
 
@@ -42,6 +43,9 @@ Route::middleware('auth')->group(function () use ($cartera) {
     Route::post('/empresas', [EmpresaController::class, 'store'])->name('empresas.store');
     Route::post('/empresas/{empresa}/entrar', [EmpresaController::class, 'entrar'])->name('empresas.entrar');
     Route::post('/empresas/salir', [EmpresaController::class, 'salir'])->name('empresas.salir');
+    Route::get('/acerca', [EmpresaController::class, 'acerca'])->name('acerca');
+    Route::get('/acerca/datos', [EmpresaController::class, 'acercaDatos'])->name('acerca.datos');
+    Route::post('/acerca', [EmpresaController::class, 'activar'])->name('acerca.activar');
 
     Route::middleware('empresa')->group(function () use ($cartera) {
         Route::get('/licencia', [EmpresaController::class, 'licencia'])->name('licencia');
@@ -63,6 +67,9 @@ Route::prefix('tenant/{tenant}')
         Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
 
         Route::middleware(['auth', 'empresa'])->group(function () use ($cartera) {
+            Route::get('/acerca', [EmpresaController::class, 'acerca'])->name('acerca');
+            Route::get('/acerca/datos', [EmpresaController::class, 'acercaDatos'])->name('acerca.datos');
+            Route::post('/acerca', [EmpresaController::class, 'activar'])->name('acerca.activar');
             Route::get('/licencia', [EmpresaController::class, 'licencia'])->name('licencia');
             Route::post('/licencia', [EmpresaController::class, 'activar'])->name('licencia.activar');
 

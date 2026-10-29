@@ -15,14 +15,24 @@ class PrestamoController extends Controller
 {
     public function __construct(private PrestamoService $prestamos) {}
 
-    public function create(Request $request): View
+    public function create(Request $request): View|RedirectResponse
     {
+        if (Cliente::query()->doesntExist()) {
+            return redirect()
+                ->to(cobro_route('clientes.create'))
+                ->with('ok', 'Primero crea el cliente. Un préstamo no se abre sin él.');
+        }
+
         $clienteId = $request->integer('cliente');
+
+        $empresa = \App\Support\EmpresaActual::empresa();
 
         return view('prestamos.create', [
             'clientes' => Cliente::query()->orderBy('nombre')->get(),
             'clienteId' => $clienteId,
             'frecuencias' => PlanPagos::FRECUENCIAS,
+            'demo' => $empresa && ! $empresa->esCompleta(),
+            'usados' => $empresa && ! $empresa->esCompleta() ? Prestamo::query()->count() : 0,
         ]);
     }
 
@@ -37,7 +47,8 @@ class PrestamoController extends Controller
             'fecha_primer_pago' => ['required', 'date'],
             'nota' => ['nullable', 'string', 'max:500'],
         ], [
-            'cliente_id.required' => 'Elige el cliente.',
+            'cliente_id.required' => 'Elige el cliente. Un préstamo no se abre sin él.',
+            'cliente_id.exists' => 'Ese cliente no existe.',
             'capital.required' => 'Escribe el valor prestado.',
             'capital.integer' => 'El capital va en pesos, sin centavos.',
             'porcentaje.required' => 'Escribe el porcentaje de interés.',
@@ -141,6 +152,36 @@ class PrestamoController extends Controller
         $this->prestamos->aplazar($cuota, $datos['fecha'], $datos['nota'] ?? null);
 
         return back()->with('ok', 'Cuota aplazada. Las siguientes también se corrieron.');
+    }
+
+    public function refinanciar(Request $request, Prestamo $prestamo): RedirectResponse
+    {
+        $datos = $request->validate([
+            'adicional' => ['required', 'integer', 'min:0'],
+            'porcentaje' => ['required', 'numeric', 'min:0', 'max:1000'],
+            'cuotas' => ['required', 'integer', 'min:1', 'max:366'],
+            'frecuencia' => ['required', 'in:diario,semanal,quincenal,mensual'],
+            'fecha_primer_pago' => ['required', 'date'],
+            'nota' => ['nullable', 'string', 'max:500'],
+        ], [
+            'adicional.required' => 'Escribe el dinero adicional. Cero si solo rearmas el saldo.',
+            'adicional.integer' => 'El adicional va en pesos, sin centavos.',
+            'porcentaje.required' => 'Escribe el interés del nuevo plan.',
+            'cuotas.required' => 'Indica cuántas cuotas nuevas son.',
+            'fecha_primer_pago.required' => 'Indica la fecha del primer pago del nuevo plan.',
+        ]);
+
+        $this->prestamos->refinanciar(
+            $prestamo,
+            (int) $datos['adicional'],
+            (float) $datos['porcentaje'],
+            (int) $datos['cuotas'],
+            $datos['frecuencia'],
+            $datos['fecha_primer_pago'],
+            $datos['nota'] ?? null
+        );
+
+        return back()->with('ok', 'El mismo préstamo quedó refinanciado. El cliente no cambió.');
     }
 
     public function anular(Request $request, Prestamo $prestamo): RedirectResponse

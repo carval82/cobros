@@ -92,7 +92,45 @@
                         <p class="ayuda" data-gps>Buscando la ubicación de este cobro…</p>
                         <button class="btn" type="submit">Guardar abono</button>
                     </form>
-                    <p class="ayuda">Si el abono cubre más de una cuota, se aplica de la más antigua a la más nueva. La ubicación queda guardada para armar la ruta.</p>
+                    <p class="ayuda">Este cobro es solo de {{ $prestamo->cliente->nombre }}. Si cubre varias cuotas, se aplica de la más antigua a la más nueva.</p>
+                </section>
+            @endif
+
+            @if ($prestamo->estado === 'activo' && $prestamo->saldo() > 0)
+                <section class="panel">
+                    <h2>Refinanciar</h2>
+                    <p class="ayuda">Sigue siendo este préstamo y este cliente. El saldo que falta, más el dinero nuevo que le entregues, arma el plan. Cero adicional solo reacomoda las cuotas.</p>
+                    <form method="post" action="{{ cobro_route('prestamos.refinanciar', $prestamo) }}" id="form-refinanciar">
+                        @csrf
+                        <label>Dinero adicional
+                            <input id="adicional" name="adicional" type="number" min="0" step="1" value="{{ old('adicional', 0) }}" required>
+                        </label>
+                        <div class="fila-form">
+                            <label>Interés del nuevo plan (%)
+                                <input id="ref-porcentaje" name="porcentaje" type="number" min="0" max="1000" step="0.01" value="{{ old('porcentaje', $prestamo->porcentaje) }}" required>
+                            </label>
+                            <label>Cuotas nuevas
+                                <input id="ref-cuotas" name="cuotas" type="number" min="1" max="366" step="1" value="{{ old('cuotas', $cuotasAbiertas->count()) }}" required>
+                            </label>
+                        </div>
+                        <div class="fila-form">
+                            <label>Frecuencia
+                                <select id="ref-frecuencia" name="frecuencia">
+                                    @foreach (\App\Services\PlanPagos::FRECUENCIAS as $clave => $nombre)
+                                        <option value="{{ $clave }}" @selected(old('frecuencia', $prestamo->frecuencia) === $clave)>{{ $nombre }}</option>
+                                    @endforeach
+                                </select>
+                            </label>
+                            <label>Primer pago
+                                <input id="ref-fecha" name="fecha_primer_pago" type="date" value="{{ old('fecha_primer_pago', now()->toDateString()) }}" required>
+                            </label>
+                        </div>
+                        <label>Nota
+                            <input name="nota" value="{{ old('nota') }}" maxlength="500">
+                        </label>
+                        <p class="ayuda" id="ref-preview" data-saldo="{{ $prestamo->saldo() }}"></p>
+                        <button class="btn" type="submit">Refinanciar este préstamo</button>
+                    </form>
                 </section>
             @endif
 
@@ -188,11 +226,32 @@
         const form = document.getElementById('form-aplazar');
         if (form) {
             const select = document.getElementById('cuota_aplazar');
+            const plantilla = @json(cobro_route('cuotas.aplazar', ['cuota' => 0]));
             const actualizar = () => {
-                form.action = '{{ url('/cuotas') }}/' + select.value + '/aplazar';
+                form.action = plantilla.replace('/cuotas/0/', '/cuotas/' + select.value + '/');
             };
             select.addEventListener('change', actualizar);
             actualizar();
+        }
+
+        const preview = document.getElementById('ref-preview');
+        if (preview) {
+            const saldo = Number(preview.dataset.saldo) || 0;
+            const dinero = (valor) => '$ ' + Math.round(valor).toLocaleString('es-CO');
+            const pintar = () => {
+                const adicional = Math.max(0, Math.round(Number(document.getElementById('adicional').value) || 0));
+                const porcentaje = Number(document.getElementById('ref-porcentaje').value) || 0;
+                const cuotas = parseInt(document.getElementById('ref-cuotas').value, 10) || 0;
+                const base = saldo + adicional;
+                const interes = Math.round(base * porcentaje / 100);
+                const total = base + interes;
+                const cuota = cuotas > 0 ? Math.round(total / cuotas) : 0;
+                preview.textContent = 'Saldo ' + dinero(saldo) + ' + ' + dinero(adicional) + ' = ' + dinero(base)
+                    + '. Con el ' + porcentaje + '% queda en ' + dinero(total)
+                    + (cuotas > 0 ? ', cerca de ' + dinero(cuota) + ' por cuota.' : '.');
+            };
+            document.getElementById('form-refinanciar').addEventListener('input', pintar);
+            pintar();
         }
 
         const latitud = document.querySelector('input[name="latitud"]');

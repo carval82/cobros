@@ -14,8 +14,22 @@ class PrestamoService
 {
     public function crear(int $clienteId, int $capital, float $porcentaje, int $numeroCuotas, string $frecuencia, string $fechaPrimerPago, ?string $nota = null): Prestamo
     {
+        if ($clienteId < 1) {
+            throw ValidationException::withMessages([
+                'cliente_id' => 'Elige el cliente. Un préstamo no se abre sin él.',
+            ]);
+        }
+
+        $cliente = \App\Models\Cliente::query()->find($clienteId);
+
+        if (! $cliente) {
+            throw ValidationException::withMessages([
+                'cliente_id' => 'Ese cliente no existe.',
+            ]);
+        }
+
+        $this->exigirCupoDemo($cliente);
         $plan = PlanPagos::simular($capital, $porcentaje, $numeroCuotas, $frecuencia, $fechaPrimerPago);
-        $cliente = \App\Models\Cliente::query()->findOrFail($clienteId);
 
         return DB::transaction(function () use ($cliente, $plan, $nota) {
             $prestamo = Prestamo::create([
@@ -62,6 +76,12 @@ class PrestamoService
 
     public function registrarPago(Prestamo $prestamo, int $monto, string $fecha, ?string $nota = null, ?float $latitud = null, ?float $longitud = null): Pago
     {
+        if (! $prestamo->cliente_id) {
+            throw ValidationException::withMessages([
+                'monto' => 'Este préstamo no tiene cliente.',
+            ]);
+        }
+
         if (! in_array($prestamo->estado, ['activo', 'detenido'], true)) {
             throw ValidationException::withMessages([
                 'monto' => 'Este préstamo no admite pagos.',
@@ -150,6 +170,99 @@ class PrestamoService
             }
 
             return $pago;
+        });
+    }
+
+    public function refinanciar(Prestamo $prestamo, int $adicional, float $porcentaje, int $numeroCuotas, string $frecuencia, string $fechaPrimerPago, ?string $nota = null): Prestamo
+    {
+        if ($prestamo->estado !== 'activo') {
+            throw ValidationException::withMessages([
+                'adicional' => 'Solo se refinancia un préstamo activo.',
+            ]);
+        }
+
+        if ($adicional < 0) {
+            throw ValidationException::withMessages([
+                'adicional' => 'El dinero adicional no puede ser negativo.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($prestamo, $adicional, $porcentaje, $numeroCuotas, $frecuencia, $fechaPrimerPago, $nota) {
+            $cuotas = $prestamo->cuotas()->orderBy('numero')->lockForUpdate()->get();
+            $saldo = (int) $cuotas->sum('saldo');
+
+            if ($saldo < 1) {
+                throw ValidationException::withMessages([
+                    'adicional' => 'Este préstamo ya no tiene saldo. El siguiente dinero se entrega en un préstamo nuevo.',
+                ]);
+            }
+
+            $plan = PlanPagos::simular($saldo + $adicional, $porcentaje, $numeroCuotas, $frecuencia, $fechaPrimerPago);
+            $ultimoNumero = (int) $cuotas->max('numero');
+
+            foreach ($cuotas as $cuota) {
+                if ($cuota->saldo <= 0) {
+                    continue;
+                }
+
+                if ($cuota->pagado > 0) {
+                    $pagado = (int) $cuota->pagado;
+                    $capital = min((int) $cuota->capital, $pagado);
+                    $cuota->update([
+                        'capital' => $capital,
+                        'interes' => $pagado - $capital,
+                        'valor' => $pagado,
+                        'saldo' => 0,
+                        'estado' => 'pagada',
+                    ]);
+
+                    continue;
+                }
+
+                $cuota->delete();
+            }
+
+            foreach ($plan['filas'] as $indice => $fila) {
+                $prestamo->cuotas()->create([
+                    'numero' => $ultimoNumero + $indice + 1,
+                    'fecha_vencimiento' => $fila['fecha'],
+                    'capital' => $fila['capital'],
+                    'interes' => $fila['interes'],
+                    'valor' => $fila['valor'],
+                    'pagado' => 0,
+                    'saldo' => $fila['valor'],
+                    'estado' => 'pendiente',
+                ]);
+            }
+
+            $prestamo->update([
+                'capital' => (int) $prestamo->capital + $adicional,
+                'porcentaje' => $porcentaje,
+                'interes' => (int) $prestamo->cuotas()->sum('interes'),
+                'total' => (int) $prestamo->cuotas()->sum('valor'),
+                'numero_cuotas' => (int) $prestamo->cuotas()->count(),
+                'frecuencia' => $frecuencia,
+                'nota' => $nota ?: $prestamo->nota,
+            ]);
+
+            $texto = $adicional > 0
+                ? 'Mismo préstamo ampliado en '.Dinero::formato($adicional).'. El saldo de '.Dinero::formato($saldo)
+                    .' más ese dinero queda en '.Dinero::formato($plan['total']).' a '.Dinero::porcentaje($porcentaje)
+                    .' en '.$plan['cuotas'].' cuotas '.strtolower(PlanPagos::FRECUENCIAS[$frecuencia]).'.'
+                : 'Mismo préstamo refinanciado. El saldo de '.Dinero::formato($saldo).' quedó en '
+                    .Dinero::formato($plan['total']).' a '.Dinero::porcentaje($porcentaje)
+                    .' en '.$plan['cuotas'].' cuotas '.strtolower(PlanPagos::FRECUENCIAS[$frecuencia]).'.';
+
+            $this->movimiento(
+                $prestamo->cliente_id,
+                $prestamo->id,
+                'refinanciar',
+                $texto,
+                $adicional > 0 ? $adicional : $plan['total'],
+                $fechaPrimerPago
+            );
+
+            return $prestamo->fresh();
         });
     }
 
@@ -349,6 +462,27 @@ class PrestamoService
                     ->orWhereHas('prestamo', fn ($p) => $p->where('estado', '!=', 'activo'));
             })
             ->update(['estado' => 'parcial']);
+    }
+
+    private function exigirCupoDemo(\App\Models\Cliente $cliente): void
+    {
+        $empresa = $cliente->empresa_id
+            ? \App\Models\Empresa::query()->find($cliente->empresa_id)
+            : (app()->bound('empresa.tenant') ? app('empresa.tenant') : null);
+
+        if (! $empresa instanceof \App\Models\Empresa || $empresa->esCompleta()) {
+            return;
+        }
+
+        $usados = \App\Support\Tenencia::activa()
+            ? Prestamo::query()->count()
+            : Prestamo::withoutGlobalScopes()->where('empresa_id', $empresa->id)->count();
+
+        if ($usados >= \App\Models\Empresa::LIMITE_DEMO) {
+            throw ValidationException::withMessages([
+                'cliente_id' => 'La demo permite '.\App\Models\Empresa::LIMITE_DEMO.' préstamos. En Acerca de pegas la clave y pasa a versión completa.',
+            ]);
+        }
     }
 
     private function movimiento(int $clienteId, ?int $prestamoId, string $tipo, string $descripcion, ?int $monto, string $fecha): void

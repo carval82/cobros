@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Empresa;
+use App\Models\Prestamo;
 use App\Services\ActivacionLicencia;
 use App\Services\ProvisionarTenant;
 use App\Support\EmpresaActual;
+use App\Support\Tenencia;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -81,15 +84,51 @@ class EmpresaController extends Controller
             ->with('ok', 'Empresa creada. Su gente entra por '.$direccion);
     }
 
-    public function licencia(): View|RedirectResponse
+    public function acerca(): View
     {
         $empresa = EmpresaActual::empresa();
 
-        if (! $empresa) {
-            return redirect()->route('empresas.index');
+        if ($empresa && ! $empresa->codigo_solicitud) {
+            $empresa->codigo_solicitud = ActivacionLicencia::codigoSolicitud('cobros-'.$empresa->id.'-'.$empresa->slug);
+            $empresa->save();
         }
 
-        return view('empresas.licencia', ['empresa' => $empresa]);
+        if ($empresa) {
+            Tenencia::conectar($empresa);
+        }
+
+        $usados = $empresa && ! $empresa->esCompleta()
+            ? Prestamo::query()->count()
+            : 0;
+
+        return view('acerca', [
+            'empresa' => $empresa,
+            'usados' => $usados,
+        ]);
+    }
+
+    public function acercaDatos(): JsonResponse
+    {
+        $empresa = EmpresaActual::empresa();
+
+        if ($empresa) {
+            Tenencia::conectar($empresa);
+        }
+
+        return response()->json([
+            'nombre' => $empresa?->nombre,
+            'completa' => $empresa?->esCompleta() ?? false,
+            'plan' => $empresa?->plan,
+            'vence' => $empresa?->fecha_vencimiento?->toDateString(),
+            'codigo_solicitud' => $empresa?->codigo_solicitud,
+            'usados' => $empresa && ! $empresa->esCompleta() ? Prestamo::query()->count() : 0,
+            'limite' => Empresa::LIMITE_DEMO,
+        ]);
+    }
+
+    public function licencia(): RedirectResponse
+    {
+        return redirect()->to(cobro_route('acerca'));
     }
 
     public function activar(Request $request): RedirectResponse
@@ -117,8 +156,8 @@ class EmpresaController extends Controller
         ]);
 
         return redirect()
-            ->to(cobro_route('dashboard'))
-            ->with('ok', 'Licencia '.$resuelto['plan'].' activa por '.$resuelto['days'].' días.');
+            ->to(cobro_route('acerca'))
+            ->with('ok', 'Versión completa activa. Plan '.$resuelto['plan'].' por '.$resuelto['days'].' días, sin límite de préstamos.');
     }
 
     public function entrar(Empresa $empresa): RedirectResponse
