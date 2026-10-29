@@ -18,6 +18,7 @@ class AsegurarUsuarioMaestro extends Command
             [
                 'name' => 'Master',
                 'password' => 'anaval33',
+                'es_maestro' => true,
             ]
         );
 

@@ -87,9 +87,12 @@
                         <label>Nota
                             <input name="nota" value="{{ old('nota') }}" maxlength="180">
                         </label>
+                        <input type="hidden" name="latitud" value="{{ old('latitud') }}">
+                        <input type="hidden" name="longitud" value="{{ old('longitud') }}">
+                        <p class="ayuda" data-gps>Buscando la ubicación de este cobro…</p>
                         <button class="btn" type="submit">Guardar abono</button>
                     </form>
-                    <p class="ayuda">Si el abono cubre más de una cuota, se aplica de la más antigua a la más nueva.</p>
+                    <p class="ayuda">Si el abono cubre más de una cuota, se aplica de la más antigua a la más nueva. La ubicación queda guardada para armar la ruta.</p>
                 </section>
             @endif
 
@@ -167,6 +170,9 @@
                                 <div>
                                     <strong>@dinero($pago->monto)</strong>
                                     <div class="muted">{{ $pago->nota }}</div>
+                                    @if ($pago->latitud && $pago->longitud)
+                                        <div class="muted">Ubicación guardada</div>
+                                    @endif
                                 </div>
                             </li>
                         @endforeach
@@ -187,6 +193,19 @@
             };
             select.addEventListener('change', actualizar);
             actualizar();
+        }
+
+        const latitud = document.querySelector('input[name="latitud"]');
+        const longitud = document.querySelector('input[name="longitud"]');
+        const avisoGps = document.querySelector('[data-gps]');
+        if (latitud && longitud && navigator.geolocation && !latitud.value) {
+            navigator.geolocation.getCurrentPosition((posicion) => {
+                latitud.value = posicion.coords.latitude.toFixed(7);
+                longitud.value = posicion.coords.longitude.toFixed(7);
+                if (avisoGps) avisoGps.textContent = 'Ubicación lista. Se guardará con el abono.';
+            }, () => {
+                if (avisoGps) avisoGps.textContent = 'No se pudo leer la ubicación. El abono se puede guardar igual.';
+            }, { enableHighAccuracy: true, timeout: 8000 });
         }
     </script>
 @endpush

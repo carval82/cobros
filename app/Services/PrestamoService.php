@@ -15,10 +15,12 @@ class PrestamoService
     public function crear(int $clienteId, int $capital, float $porcentaje, int $numeroCuotas, string $frecuencia, string $fechaPrimerPago, ?string $nota = null): Prestamo
     {
         $plan = PlanPagos::simular($capital, $porcentaje, $numeroCuotas, $frecuencia, $fechaPrimerPago);
+        $cliente = \App\Models\Cliente::query()->findOrFail($clienteId);
 
-        return DB::transaction(function () use ($clienteId, $plan, $nota) {
+        return DB::transaction(function () use ($cliente, $plan, $nota) {
             $prestamo = Prestamo::create([
-                'cliente_id' => $clienteId,
+                'empresa_id' => $cliente->empresa_id,
+                'cliente_id' => $cliente->id,
                 'capital' => $plan['capital'],
                 'porcentaje' => $plan['porcentaje'],
                 'interes' => $plan['interes'],
@@ -44,7 +46,7 @@ class PrestamoService
             }
 
             $this->movimiento(
-                $clienteId,
+                $cliente->id,
                 $prestamo->id,
                 'prestamo',
                 'Préstamo de '.Dinero::formato($plan['capital']).' al '.Dinero::porcentaje($plan['porcentaje'])
@@ -58,7 +60,7 @@ class PrestamoService
         });
     }
 
-    public function registrarPago(Prestamo $prestamo, int $monto, string $fecha, ?string $nota = null): Pago
+    public function registrarPago(Prestamo $prestamo, int $monto, string $fecha, ?string $nota = null, ?float $latitud = null, ?float $longitud = null): Pago
     {
         if (! in_array($prestamo->estado, ['activo', 'detenido'], true)) {
             throw ValidationException::withMessages([
@@ -66,7 +68,7 @@ class PrestamoService
             ]);
         }
 
-        return DB::transaction(function () use ($prestamo, $monto, $fecha, $nota) {
+        return DB::transaction(function () use ($prestamo, $monto, $fecha, $nota, $latitud, $longitud) {
             $cuotas = $prestamo->cuotas()->orderBy('numero')->lockForUpdate()->get();
             $saldo = (int) $cuotas->sum('saldo');
 
@@ -77,12 +79,25 @@ class PrestamoService
             }
 
             $pago = Pago::create([
+                'empresa_id' => $prestamo->empresa_id,
                 'prestamo_id' => $prestamo->id,
                 'cliente_id' => $prestamo->cliente_id,
                 'monto' => $monto,
                 'fecha' => $fecha,
                 'nota' => $nota,
+                'latitud' => $latitud,
+                'longitud' => $longitud,
             ]);
+
+            if ($latitud !== null && $longitud !== null) {
+                $cliente = $prestamo->cliente;
+                if ($cliente->latitud === null || $cliente->longitud === null) {
+                    $cliente->update([
+                        'latitud' => $latitud,
+                        'longitud' => $longitud,
+                    ]);
+                }
+            }
 
             $restante = $monto;
             $cubiertas = [];
@@ -339,6 +354,7 @@ class PrestamoService
     private function movimiento(int $clienteId, ?int $prestamoId, string $tipo, string $descripcion, ?int $monto, string $fecha): void
     {
         Movimiento::create([
+            'empresa_id' => \App\Models\Cliente::query()->whereKey($clienteId)->value('empresa_id'),
             'cliente_id' => $clienteId,
             'prestamo_id' => $prestamoId,
             'tipo' => $tipo,

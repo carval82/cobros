@@ -20,13 +20,28 @@
                 </span>
             </a>
             <nav>
-                <a href="{{ route('dashboard') }}" @class(['active' => request()->routeIs('dashboard')])>Hoy</a>
-                <a href="{{ route('atrasados') }}" @class(['active' => request()->routeIs('atrasados')])>Atrasados</a>
-                <a href="{{ route('clientes.index') }}" @class(['active' => request()->routeIs('clientes.*')])>Clientes</a>
-                <a href="{{ route('prestamos.create') }}" @class(['active' => request()->routeIs('prestamos.create')])>Nuevo préstamo</a>
+                @if (auth()->user()->es_maestro)
+                    <a href="{{ route('empresas.index') }}" @class(['active' => request()->routeIs('empresas.*')])>Empresas</a>
+                @endif
+                @if (! auth()->user()->es_maestro || session('empresa_id'))
+                    <a href="{{ route('dashboard') }}" @class(['active' => request()->routeIs('dashboard')])>Hoy</a>
+                    <a href="{{ route('ruta') }}" @class(['active' => request()->routeIs('ruta')])>Ruta</a>
+                    <a href="{{ route('atrasados') }}" @class(['active' => request()->routeIs('atrasados')])>Atrasados</a>
+                    <a href="{{ route('clientes.index') }}" @class(['active' => request()->routeIs('clientes.*')])>Clientes</a>
+                    <a href="{{ route('prestamos.create') }}" @class(['active' => request()->routeIs('prestamos.create')])>Nuevo préstamo</a>
+                @endif
             </nav>
             <div class="sesion">
                 <p>{{ auth()->user()->name }}</p>
+                @if ($empresa = \App\Support\EmpresaActual::empresa())
+                    <p>{{ $empresa->nombre }}</p>
+                    @if (auth()->user()->es_maestro)
+                        <form method="post" action="{{ route('empresas.salir') }}">
+                            @csrf
+                            <button class="salir" type="submit">Cambiar empresa</button>
+                        </form>
+                    @endif
+                @endif
                 <form method="post" action="{{ route('logout') }}">
                     @csrf
                     <button class="salir" type="submit">Salir</button>

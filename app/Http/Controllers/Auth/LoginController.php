@@ -44,7 +44,7 @@ class LoginController extends Controller
             Auth::login($usuario);
             $request->session()->regenerate();
 
-            return redirect()->route('dashboard');
+            return $this->despuesDeEntrar($request);
         }
 
         $datos = $request->validate([
@@ -66,6 +66,15 @@ class LoginController extends Controller
         }
 
         $request->session()->regenerate();
+
+        return $this->despuesDeEntrar($request);
+    }
+
+    private function despuesDeEntrar(Request $request): RedirectResponse
+    {
+        if ($request->user()?->es_maestro) {
+            return redirect()->route('empresas.index');
+        }
 
         return redirect()->intended(route('dashboard'));
     }

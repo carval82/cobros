@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FiltraEmpresa;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Movimiento extends Model
 {
+    use FiltraEmpresa;
+
     protected $fillable = [
+        'empresa_id',
         'cliente_id',
         'prestamo_id',
         'tipo',

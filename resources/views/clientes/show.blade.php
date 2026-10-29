@@ -10,6 +10,7 @@
                 {{ $cliente->documento }}
                 @if ($cliente->telefono) · {{ $cliente->telefono }} @endif
                 @if ($cliente->direccion) · {{ $cliente->direccion }} @endif
+                @if ($cliente->latitud && $cliente->longitud) · Ubicación en la ruta @endif
             </p>
         </div>
         <div class="acciones">

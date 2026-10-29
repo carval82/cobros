@@ -2,18 +2,24 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FiltraEmpresa;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Pago extends Model
 {
+    use FiltraEmpresa;
+
     protected $fillable = [
+        'empresa_id',
         'prestamo_id',
         'cliente_id',
         'monto',
         'fecha',
         'nota',
+        'latitud',
+        'longitud',
     ];
 
     protected function casts(): array
@@ -21,6 +27,8 @@ class Pago extends Model
         return [
             'monto' => 'integer',
             'fecha' => 'date',
+            'latitud' => 'float',
+            'longitud' => 'float',
         ];
     }
 

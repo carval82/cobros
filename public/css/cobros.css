@@ -71,6 +71,19 @@ button.salir {
 .marca-clara small { color: var(--muted); }
 .check { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
 .check input { width: auto; }
+.mapa { height: 340px; border-radius: 16px; margin-bottom: 16px; border: 1px solid var(--line); }
+.marca-mapa {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--navy); color: white;
+    display: grid; place-items: center; font-size: 0.78rem; font-weight: 700; border: 2px solid white;
+}
+.parada {
+    display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: center;
+    padding: 12px 0; border-bottom: 1px solid var(--line);
+}
+.parada-orden {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--navy); color: white;
+    display: grid; place-items: center; font-weight: 700;
+}
 .side nav a {
     text-decoration: none; padding: 10px 12px; border-radius: 10px; color: #ddd6cb;
 }

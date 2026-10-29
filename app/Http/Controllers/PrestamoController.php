@@ -80,12 +80,28 @@ class PrestamoController extends Controller
             'monto' => ['required', 'integer', 'min:1'],
             'fecha' => ['required', 'date'],
             'nota' => ['nullable', 'string', 'max:180'],
+            'latitud' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitud' => ['nullable', 'numeric', 'between:-180,180'],
         ], [
             'monto.required' => 'Escribe el valor del abono.',
             'monto.integer' => 'El abono va en pesos, sin centavos.',
         ]);
 
-        $this->prestamos->registrarPago($prestamo, (int) $datos['monto'], $datos['fecha'], $datos['nota'] ?? null);
+        $latitud = isset($datos['latitud']) ? (float) $datos['latitud'] : null;
+        $longitud = isset($datos['longitud']) ? (float) $datos['longitud'] : null;
+        if ($latitud === null || $longitud === null) {
+            $latitud = null;
+            $longitud = null;
+        }
+
+        $this->prestamos->registrarPago(
+            $prestamo,
+            (int) $datos['monto'],
+            $datos['fecha'],
+            $datos['nota'] ?? null,
+            $latitud,
+            $longitud
+        );
 
         return back()->with('ok', 'Abono registrado.');
     }

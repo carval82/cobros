@@ -13,7 +13,18 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
         $middleware->redirectGuestsTo(fn () => route('login'));
-        $middleware->redirectUsersTo(fn () => route('dashboard'));
+        $middleware->redirectUsersTo(function () {
+            $usuario = auth()->user();
+
+            if ($usuario?->es_maestro && ! session('empresa_id')) {
+                return route('empresas.index');
+            }
+
+            return route('dashboard');
+        });
+        $middleware->alias([
+            'empresa' => \App\Http\Middleware\AsegurarEmpresa::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -56,9 +56,10 @@ class LoginTest extends TestCase
         $this->post('/login', [
             'email' => 'pcapacho24@gmail.com',
             'password' => 'anaval33',
-        ])->assertRedirect(route('dashboard'));
+        ])->assertRedirect(route('empresas.index'));
 
         $this->assertAuthenticated();
+        $this->assertTrue(auth()->user()->es_maestro);
 
         $this->artisan('cobros:usuario-maestro')->assertSuccessful();
         $this->assertSame(1, User::query()->count());

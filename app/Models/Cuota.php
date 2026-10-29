@@ -2,12 +2,27 @@
 
 namespace App\Models;
 
+use App\Support\EmpresaActual;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cuota extends Model
 {
+    protected static function booted(): void
+    {
+        static::addGlobalScope('empresa', function (Builder $query) {
+            if (! EmpresaActual::restringe()) {
+                return;
+            }
+
+            $query->whereHas('prestamo', function (Builder $prestamo) {
+                $prestamo->where('prestamos.empresa_id', EmpresaActual::id() ?? 0);
+            });
+        });
+    }
+
     protected $fillable = [
         'prestamo_id',
         'numero',

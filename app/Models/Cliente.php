@@ -2,19 +2,39 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FiltraEmpresa;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Cliente extends Model
 {
+    use FiltraEmpresa;
+
     protected $fillable = [
+        'empresa_id',
         'nombre',
         'documento',
         'telefono',
         'direccion',
         'notas',
+        'latitud',
+        'longitud',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'latitud' => 'float',
+            'longitud' => 'float',
+        ];
+    }
+
+    public function empresa(): BelongsTo
+    {
+        return $this->belongsTo(Empresa::class);
+    }
 
     public function prestamos(): HasMany
     {
