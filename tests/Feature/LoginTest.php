@@ -12,7 +12,7 @@ class LoginTest extends TestCase
 
     public function test_un_visitante_va_al_login(): void
     {
-        $this->get('/')->assertRedirect(route('login'));
+        $this->get('/')->assertOk()->assertSee('Crear empresa');
         $this->get('/clientes')->assertRedirect(route('login'));
     }
 
@@ -82,6 +82,6 @@ class LoginTest extends TestCase
 
         $this->post('/logout')->assertRedirect(route('login'));
         $this->assertGuest();
-        $this->get('/')->assertRedirect(route('login'));
+        $this->get('/')->assertOk()->assertSee('Crear empresa');
     }
 }

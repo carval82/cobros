@@ -11,7 +11,7 @@ use RuntimeException;
 
 class ProvisionarTenant
 {
-    public function aprovisionar(Empresa $empresa, string $nombreUsuario, string $email, string $password): void
+    public function aprovisionar(Empresa $empresa, string $nombreUsuario, string $email, string $password): User
     {
         $base = 'cobros_e'.$empresa->id;
         $empresa->forceFill([
@@ -31,12 +31,13 @@ class ProvisionarTenant
             '--force' => true,
         ]);
 
-        User::query()->create([
+        return User::query()->create([
             'name' => $nombreUsuario,
             'email' => $email,
             'password' => $password,
             'empresa_id' => $empresa->id,
             'es_maestro' => false,
+            'rol' => 'administrador',
         ]);
     }
 

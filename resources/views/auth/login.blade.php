@@ -39,4 +39,7 @@
         @endif
         <button class="btn" type="submit">{{ $primeraCuenta ? 'Crear cuenta y entrar' : 'Entrar' }}</button>
     </form>
+    @unless ($empresaTenant)
+        <p class="ayuda"><a href="{{ route('dashboard') }}">Crear una empresa</a></p>
+    @endunless
 @endsection

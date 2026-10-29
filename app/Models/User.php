@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Support\Permisos;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -24,6 +25,7 @@ class User extends Authenticatable
         'password',
         'es_maestro',
         'empresa_id',
+        'rol',
     ];
 
     /**
@@ -53,5 +55,16 @@ class User extends Authenticatable
             'password' => 'hashed',
             'es_maestro' => 'boolean',
         ];
+    }
+
+    public function puede(string $permiso): bool
+    {
+        if ($this->es_maestro) {
+            return true;
+        }
+
+        $lista = Permisos::de($this->rol ?: 'administrador');
+
+        return in_array('*', $lista, true) || in_array($permiso, $lista, true);
     }
 }

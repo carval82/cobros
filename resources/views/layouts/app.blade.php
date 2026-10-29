@@ -22,12 +22,20 @@
                     <a href="{{ cobro_route('ruta') }}" @class(['active' => request()->routeIs('ruta', 'tenant.ruta')])>Ruta</a>
                     <a href="{{ cobro_route('atrasados') }}" @class(['active' => request()->routeIs('atrasados', 'tenant.atrasados')])>Atrasados</a>
                     <a href="{{ cobro_route('clientes.index') }}" @class(['active' => request()->routeIs('clientes.*', 'tenant.clientes.*')])>Clientes</a>
-                    <a href="{{ cobro_route('prestamos.create') }}" @class(['active' => request()->routeIs('prestamos.create', 'tenant.prestamos.create')])>Nuevo préstamo</a>
+                    @if (auth()->user()->puede('prestamos.crear'))
+                        <a href="{{ cobro_route('prestamos.create') }}" @class(['active' => request()->routeIs('prestamos.create', 'tenant.prestamos.create')])>Nuevo préstamo</a>
+                    @endif
+                    @if (auth()->user()->puede('usuarios.gestionar'))
+                        <a href="{{ cobro_route('usuarios.index') }}" @class(['active' => request()->routeIs('usuarios.*', 'tenant.usuarios.*')])>Usuarios</a>
+                    @endif
                 @endif
                 <a href="{{ cobro_route('acerca') }}" @class(['active' => request()->routeIs('acerca', 'tenant.acerca')])>Acerca de</a>
             </nav>
             <div class="sesion">
                 <p>{{ auth()->user()->name }}</p>
+                @unless (auth()->user()->es_maestro)
+                    <p>{{ \App\Support\Permisos::ROLES[auth()->user()->rol] ?? 'Administrador' }}</p>
+                @endunless
                 @if ($empresa = \App\Support\EmpresaActual::empresa())
                     <p>{{ $empresa->nombre }}</p>
                     @if (auth()->user()->es_maestro)
