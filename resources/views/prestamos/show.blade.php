@@ -38,7 +38,7 @@
     <div class="dos">
         <section class="panel">
             <h2>Fechas de pago</h2>
-            <table>
+            <div class="tabla-wrap"><table>
                 <thead>
                     <tr>
                         <th>#</th>
@@ -66,7 +66,7 @@
                         </tr>
                     @endforeach
                 </tbody>
-            </table>
+            </table></div>
             @if ($prestamo->nota)
                 <p class="ayuda">{{ $prestamo->nota }}</p>
             @endif

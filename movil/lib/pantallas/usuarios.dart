@@ -19,6 +19,7 @@ class _UsuariosState extends State<Usuarios> {
   final _nombre = TextEditingController();
   final _correo = TextEditingController();
   final _clave = TextEditingController();
+  final _porcentaje = TextEditingController(text: '10');
 
   @override
   void initState() {
@@ -31,6 +32,7 @@ class _UsuariosState extends State<Usuarios> {
     _nombre.dispose();
     _correo.dispose();
     _clave.dispose();
+    _porcentaje.dispose();
     super.dispose();
   }
 
@@ -56,6 +58,7 @@ class _UsuariosState extends State<Usuarios> {
         clave: _clave.text,
         rol: _rol,
         token: token,
+        porcentaje: _porcentaje.text.trim().isEmpty ? '10' : _porcentaje.text.trim(),
       );
       _nombre.clear();
       _correo.clear();
@@ -99,6 +102,12 @@ class _UsuariosState extends State<Usuarios> {
             },
           ),
           const SizedBox(height: 12),
+          TextField(
+            controller: _porcentaje,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: '% de lo que cobre'),
+          ),
+          const SizedBox(height: 12),
           FilledButton(
             onPressed: _ocupado ? null : _crear,
             child: const Text('Crear usuario'),
@@ -110,7 +119,7 @@ class _UsuariosState extends State<Usuarios> {
                 contentPadding: EdgeInsets.zero,
                 title: Text(item['nombre']?.toString() ?? ''),
                 subtitle: Text(item['correo']?.toString() ?? ''),
-                trailing: Text(_etiqueta(item['rol']?.toString() ?? '', roles)),
+                trailing: Text('${_etiqueta(item['rol']?.toString() ?? '', roles)} · ${item['porcentaje'] ?? 0}%'),
               ),
           if (_error != null)
             Text(_error!, style: const TextStyle(color: Color(0xFFA32632))),

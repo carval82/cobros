@@ -20,7 +20,7 @@
         @if ($clientes->isEmpty())
             <p class="vacio">No hay clientes con ese dato.</p>
         @else
-            <table>
+            <div class="tabla-wrap"><table>
                 <thead>
                     <tr>
                         <th>Cliente</th>
@@ -42,7 +42,7 @@
                         </tr>
                     @endforeach
                 </tbody>
-            </table>
+            </table></div>
         @endif
     </section>
 @endsection

@@ -14,6 +14,28 @@
         <h1>Configura el celular</h1>
         <p>La primera vez dejas lista la empresa. Después la app abre directo en Hoy, con la misma dirección y el mismo correo.</p>
 
+        <section class="panel">
+            <h2>Dirección del tenant</h2>
+            @if ($empresas->isEmpty())
+                <p>Entra con la empresa para ver aquí el número y la dirección que se pega en el celular.</p>
+                <p><a class="btn" href="{{ route('login') }}">Entrar para verla</a></p>
+            @else
+                <p class="ayuda">Si la empresa ya está creada, esta es la dirección. En el celular toca <strong>Ya tengo empresa</strong> y pégala en Dirección del tenant.</p>
+                @foreach ($empresas as $empresa)
+                    @php $direccion = $empresa->direccion(); @endphp
+                    <article style="margin-top:16px">
+                        <h3 style="margin:0 0 6px">{{ $empresa->nombre }}</h3>
+                        @if ($direccion)
+                            <p class="direccion-tenant"><span>Pega esta dirección</span>{{ $direccion }}</p>
+                            <p class="ayuda">Número del tenant: <strong>{{ $empresa->uuid }}</strong></p>
+                        @else
+                            <p class="ayuda">Esta empresa usa la base central y no tiene dirección pública de tenant.</p>
+                        @endif
+                    </article>
+                @endforeach
+            @endif
+        </section>
+
         @if ($descargas)
             <section class="panel">
                 <h2>Bajar la app</h2>

@@ -27,6 +27,9 @@
                     @endif
                     @if (auth()->user()->puede('usuarios.gestionar'))
                         <a href="{{ cobro_route('usuarios.index') }}" @class(['active' => request()->routeIs('usuarios.*', 'tenant.usuarios.*')])>Usuarios</a>
+                        <a href="{{ cobro_route('rendimiento') }}" @class(['active' => request()->routeIs('rendimiento', 'rendimiento.datos', 'tenant.rendimiento', 'tenant.rendimiento.datos')])>Rendimiento</a>
+                    @elseif (auth()->user()->puede('cobros.registrar'))
+                        <a href="{{ cobro_route('rendimiento.mio') }}" @class(['active' => request()->routeIs('rendimiento.mio', 'tenant.rendimiento.mio')])>Mi rendimiento</a>
                     @endif
                 @endif
                 <a href="{{ route('app.movil') }}" @class(['active' => request()->routeIs('app.movil')])>App del celular</a>
@@ -55,6 +58,15 @@
         <main>
             @if (session('ok'))
                 <p class="aviso aviso-ok">{{ session('ok') }}</p>
+            @endif
+            @if (session('whatsapp'))
+                <p class="aviso aviso-ok">
+                    El saldo ya se puede mandar al cliente.
+                    <a class="btn" href="{{ session('whatsapp') }}" target="_blank" rel="noopener">Enviar por WhatsApp</a>
+                </p>
+            @endif
+            @if (session('whatsapp_aviso'))
+                <p class="aviso">{{ session('whatsapp_aviso') }}</p>
             @endif
             @if ($errors->any())
                 <div class="aviso aviso-error">

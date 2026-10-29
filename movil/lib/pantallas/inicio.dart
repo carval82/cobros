@@ -8,6 +8,7 @@ import 'acerca.dart';
 import 'entrada.dart';
 import 'clientes.dart';
 import 'hoy.dart';
+import 'rendimiento.dart';
 import 'ruta.dart';
 import 'usuarios.dart';
 
@@ -47,6 +48,7 @@ class _InicioState extends State<Inicio> {
     final empresa = sesion?['empresa']?.toString();
     final tenant = sesion?['tenant']?.toString() ?? '';
     final puedeUsuarios = sesion?['usuarios'] == true;
+    final puedeCobros = sesion?['cobros'] == true;
     final puedeClientes = sesion?['clientes'] == true;
     final puedePrestamos = sesion?['prestamos'] == true;
 
@@ -76,7 +78,7 @@ class _InicioState extends State<Inicio> {
                     Hoy(api: widget.api),
                     Clientes(api: widget.api, puedeEscribir: puedeClientes, puedePrestamos: puedePrestamos),
                     RutaDia(api: widget.api, puedeEscribir: puedeClientes),
-                    _Mas(api: widget.api, sesion: sesion, puedeUsuarios: puedeUsuarios),
+                    _Mas(api: widget.api, sesion: sesion, puedeUsuarios: puedeUsuarios, puedeCobros: puedeCobros),
                   ],
                 ),
       bottomNavigationBar: sesion == null || tenant.isEmpty
@@ -96,11 +98,12 @@ class _InicioState extends State<Inicio> {
 }
 
 class _Mas extends StatelessWidget {
-  const _Mas({required this.api, required this.sesion, required this.puedeUsuarios});
+  const _Mas({required this.api, required this.sesion, required this.puedeUsuarios, required this.puedeCobros});
 
   final CobrosApi api;
   final Map<String, dynamic> sesion;
   final bool puedeUsuarios;
+  final bool puedeCobros;
 
   @override
   Widget build(BuildContext context) {
@@ -144,12 +147,26 @@ class _Mas extends StatelessWidget {
           Text('Versión demo: hasta ${sesion['limite_demo']} préstamos. La clave se pega en Acerca de.'),
         ],
         const SizedBox(height: 16),
-        if (puedeUsuarios)
+        if (puedeUsuarios) ...[
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => RendimientoVista(api: api, propio: false)));
+            },
+            child: const Text('Rendimiento de cobradores'),
+          ),
+          const SizedBox(height: 8),
           FilledButton(
             onPressed: () {
               Navigator.of(context).push(MaterialPageRoute(builder: (_) => Usuarios(api: api)));
             },
             child: const Text('Usuarios y roles'),
+          ),
+        ] else if (puedeCobros)
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => RendimientoVista(api: api, propio: true)));
+            },
+            child: const Text('Mi rendimiento'),
           ),
         TextButton(
           onPressed: () {

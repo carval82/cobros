@@ -21,6 +21,9 @@ class Pago extends Model
         'nota',
         'latitud',
         'longitud',
+        'user_id',
+        'porcentaje',
+        'comision',
     ];
 
     protected function casts(): array
@@ -30,6 +33,8 @@ class Pago extends Model
             'fecha' => 'date',
             'latitud' => 'float',
             'longitud' => 'float',
+            'porcentaje' => 'decimal:2',
+            'comision' => 'integer',
         ];
     }
 

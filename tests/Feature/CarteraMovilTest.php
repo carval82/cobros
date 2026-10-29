@@ -51,12 +51,15 @@ class CarteraMovilTest extends TestCase
             ->assertJsonPath('prestamo.cliente', 'Ana')
             ->assertJsonPath('cobros', true);
 
-        $this->postJson('/prestamos/'.$prestamo->id.'/pagar', [
+        $abono = $this->postJson('/prestamos/'.$prestamo->id.'/pagar', [
             'monto' => 10000,
             'fecha' => now()->toDateString(),
             'latitud' => 4.711,
             'longitud' => -74.072,
         ])->assertOk();
+
+        $this->assertStringContainsString('wa.me/573001112233', (string) $abono->json('whatsapp'));
+        $this->assertStringContainsString('110.000', (string) $abono->json('whatsapp'));
 
         $this->assertEquals(4.711, Pago::query()->first()->latitud);
 

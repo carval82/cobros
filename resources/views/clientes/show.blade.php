@@ -30,7 +30,7 @@
             @if ($cliente->prestamos->isEmpty())
                 <p class="vacio">Este cliente todavía no tiene préstamos.</p>
             @else
-                <table>
+                <div class="tabla-wrap"><table>
                     <thead>
                         <tr>
                             <th>Préstamo</th>
@@ -54,7 +54,7 @@
                             </tr>
                         @endforeach
                     </tbody>
-                </table>
+                </table></div>
             @endif
         </section>
         <section class="panel">

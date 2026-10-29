@@ -26,6 +26,7 @@ class User extends Authenticatable
         'es_maestro',
         'empresa_id',
         'rol',
+        'porcentaje_cobro',
     ];
 
     /**
@@ -54,6 +55,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'es_maestro' => 'boolean',
+            'porcentaje_cobro' => 'decimal:2',
         ];
     }
 

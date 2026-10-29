@@ -74,9 +74,12 @@ class _PrestamoVistaState extends State<PrestamoVista> {
         lat = punto.latitud;
         lng = punto.longitud;
       }
-      await widget.api.pagar(
+      final prestamoActual = _datos?['prestamo'];
+      final mapaActual = prestamoActual is Map ? prestamoActual : const {};
+      final monto = int.parse(_monto.text);
+      final resultado = await widget.api.pagar(
         prestamoId: widget.prestamoId,
-        monto: int.parse(_monto.text),
+        monto: monto,
         fecha: _fechaTexto,
         nota: _nota.text.trim(),
         latitud: lat,
@@ -84,6 +87,54 @@ class _PrestamoVistaState extends State<PrestamoVista> {
       );
       _nota.clear();
       await _cargar();
+      final actualizado = _datos?['prestamo'];
+      final mapaNuevo = actualizado is Map ? actualizado : mapaActual;
+      final cuotas = (_datos?['cuotas'] as List?) ?? const [];
+      Map? proxima;
+      for (final item in cuotas) {
+        if (item is Map && entero(item['saldo']) > 0) {
+          proxima = item;
+          break;
+        }
+      }
+      final cliente = resultado['cliente']?.toString() ?? mapaNuevo['cliente']?.toString() ?? 'el cliente';
+      var enlace = resultado['whatsapp']?.toString() ?? '';
+      if (enlace.isEmpty) {
+        enlace = enlaceAbonoWhatsapp(
+          telefono: mapaNuevo['telefono']?.toString() ?? mapaActual['telefono']?.toString() ?? '',
+          nombre: cliente,
+          monto: monto,
+          saldo: entero(mapaNuevo['saldo']),
+          proximaFecha: proxima?['fecha']?.toString(),
+          proximaValor: proxima == null ? null : entero(proxima['saldo']),
+        );
+      }
+      if (!mounted) return;
+      if (enlace.isEmpty) {
+        await showDialog<void>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Abono guardado'),
+            content: const Text('Este cliente no tiene un teléfono válido. Agrégalo para poder enviarle el saldo por WhatsApp.'),
+            actions: [
+              FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Listo')),
+            ],
+          ),
+        );
+        return;
+      }
+      final enviar = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Abono guardado'),
+          content: Text('¿Le envías a $cliente el saldo por WhatsApp?'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Ahora no')),
+            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Enviar por WhatsApp')),
+          ],
+        ),
+      );
+      if (enviar == true) await abrirEnlace(enlace);
     } catch (e) {
       if (mounted) setState(() => _error = textoError(e));
     } finally {

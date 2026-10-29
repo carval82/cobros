@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Empresa;
+use App\Models\User;
 use Illuminate\View\View;
 
 class AppMovilController extends Controller
@@ -26,6 +28,30 @@ class AppMovilController extends Controller
             ];
         }
 
-        return view('app-movil', ['descargas' => $descargas]);
+        return view('app-movil', [
+            'descargas' => $descargas,
+            'empresas' => $this->empresasVisibles(),
+        ]);
+    }
+
+    private function empresasVisibles()
+    {
+        $usuario = auth()->user();
+
+        if (! $usuario instanceof User) {
+            return collect();
+        }
+
+        if ($usuario->es_maestro) {
+            return Empresa::query()->orderBy('nombre')->get();
+        }
+
+        if (! $usuario->empresa_id) {
+            return collect();
+        }
+
+        $propia = Empresa::query()->find($usuario->empresa_id);
+
+        return $propia ? collect([$propia]) : collect();
     }
 }

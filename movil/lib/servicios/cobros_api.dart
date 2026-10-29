@@ -118,6 +118,7 @@ class CobrosApi {
     required String clave,
     required String rol,
     required String token,
+    String porcentaje = '10',
   }) async {
     final respuesta = await _pedir('POST', '$_prefijo/usuarios', json: true, campos: {
       '_token': token,
@@ -126,6 +127,7 @@ class CobrosApi {
       'password': clave,
       'password_confirmation': clave,
       'rol': rol,
+      'porcentaje_cobro': porcentaje,
     });
     if (respuesta.statusCode >= 400) {
       throw Exception(_mensaje(respuesta));
@@ -191,7 +193,7 @@ class CobrosApi {
     return int.parse('${datos['id']}');
   }
 
-  Future<void> pagar({
+  Future<Map<String, dynamic>> pagar({
     required int prestamoId,
     required int monto,
     required String fecha,
@@ -199,7 +201,7 @@ class CobrosApi {
     double? latitud,
     double? longitud,
   }) async {
-    await _cartera('POST', '/prestamos/$prestamoId/pagar', campos: {
+    return _cartera('POST', '/prestamos/$prestamoId/pagar', campos: {
       '_token': token ?? '',
       'monto': '$monto',
       'fecha': fecha,
@@ -233,6 +235,10 @@ class CobrosApi {
     final consulta = latitud == null || longitud == null ? '' : '?latitud=$latitud&longitud=$longitud';
     return _cartera('GET', '/ruta/datos$consulta');
   }
+
+  Future<Map<String, dynamic>> rendimiento() => _cartera('GET', '/rendimiento/datos');
+
+  Future<Map<String, dynamic>> miRendimiento() => _cartera('GET', '/mi-rendimiento/datos');
 
   Future<Map<String, dynamic>> _cartera(String metodo, String ruta, {Map<String, String>? campos}) async {
     if (tenant == null || tenant!.isEmpty) {

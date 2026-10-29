@@ -6,6 +6,7 @@ use App\Models\Cuota;
 use App\Models\Movimiento;
 use App\Models\Pago;
 use App\Models\Prestamo;
+use App\Models\User;
 use App\Support\Dinero;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -98,11 +99,17 @@ class PrestamoService
                 ]);
             }
 
+            $cobrador = auth()->user();
+            $porcentaje = $cobrador instanceof User ? round((float) $cobrador->porcentaje_cobro, 2) : 0;
+
             $pago = Pago::create([
                 'empresa_id' => $prestamo->empresa_id,
                 'prestamo_id' => $prestamo->id,
                 'cliente_id' => $prestamo->cliente_id,
+                'user_id' => $cobrador instanceof User ? $cobrador->id : null,
                 'monto' => $monto,
+                'porcentaje' => $porcentaje,
+                'comision' => (int) round($monto * $porcentaje / 100),
                 'fecha' => $fecha,
                 'nota' => $nota,
                 'latitud' => $latitud,

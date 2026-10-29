@@ -8,6 +8,8 @@ use App\Models\Pago;
 use App\Models\Prestamo;
 use App\Services\PlanPagos;
 use App\Services\PrestamoService;
+use App\Support\AvisoWhatsapp;
+use App\Support\EmpresaActual;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -180,11 +182,35 @@ class PrestamoController extends Controller
             $longitud
         );
 
+        $prestamo->unsetRelation('cuotas');
+        $prestamo->load('cliente');
+        $saldo = $prestamo->saldo();
+        $proxima = $prestamo->cuotas()->where('saldo', '>', 0)->orderBy('numero')->first();
+        $empresa = EmpresaActual::empresa();
+        $whatsapp = AvisoWhatsapp::enlace(
+            $prestamo->cliente,
+            (int) $datos['monto'],
+            $saldo,
+            $proxima?->fecha_vencimiento?->format('d/m/Y'),
+            $proxima ? (int) $proxima->saldo : null,
+            $empresa?->nombre ?? 'Cobras'
+        );
+
         if ($request->expectsJson()) {
-            return response()->json(['ok' => true, 'token' => csrf_token()]);
+            return response()->json([
+                'ok' => true,
+                'token' => csrf_token(),
+                'saldo' => $saldo,
+                'cliente' => $prestamo->cliente->nombre,
+                'whatsapp' => $whatsapp,
+            ]);
         }
 
-        return back()->with('ok', 'Abono registrado.');
+        $vuelta = back()->with('ok', 'Abono registrado.');
+
+        return $whatsapp
+            ? $vuelta->with('whatsapp', $whatsapp)
+            : $vuelta->with('whatsapp_aviso', 'El cliente no tiene un teléfono válido para WhatsApp.');
     }
 
     public function detener(Request $request, Prestamo $prestamo): RedirectResponse|JsonResponse

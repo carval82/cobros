@@ -8,6 +8,7 @@ php artisan config:clear
 if [ "$RAILPACK_SKIP_MIGRATIONS" != "true" ]; then
   echo "Running migrations ..."
   php artisan migrate --force
+  php artisan cobros:migrar-tenants
 fi
 
 php artisan cobros:usuario-maestro

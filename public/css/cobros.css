@@ -24,6 +24,7 @@
 
 body {
     margin: 0;
+    overflow-x: clip;
     color: var(--ink);
     background:
         radial-gradient(900px 420px at 100% -10%, rgba(228, 193, 106, 0.45), transparent 55%),
@@ -232,6 +233,7 @@ main { min-width: 0; padding: 32px 36px 56px; }
 .dos { display: grid; grid-template-columns: 1.4fr 0.8fr; gap: 16px; }
 .tablero { display: grid; grid-template-columns: 380px 1fr; gap: 16px; align-items: start; }
 
+.tabla-wrap, .preview-tabla { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 12px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
 th { color: var(--muted); font-weight: 650; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; }
@@ -263,6 +265,10 @@ input:focus, select:focus, textarea:focus {
 }
 textarea { min-height: 90px; resize: vertical; }
 .fila-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.equipo-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.equipo-form select { width: 150px; }
+.equipo-form input { width: 88px; }
+.equipo-form .btn { width: auto; }
 .buscar { display: flex; gap: 8px; margin-bottom: 16px; }
 .buscar input { max-width: 420px; }
 .vacio { color: var(--muted); padding: 12px 0; }
@@ -279,6 +285,9 @@ textarea { min-height: 90px; resize: vertical; }
 .cifras-empresas { grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); }
 a.direccion-corta { display: inline-block; max-width: 240px; margin: 0; padding: 8px 10px; font-size: 0.78rem; }
 .filtros { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; align-items: end; margin-bottom: 16px; }
+.filtros-fechas { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+.filtros-fechas input { min-width: 0; }
+.filtros-fechas .btn { width: auto; white-space: nowrap; }
 .filtros label { margin: 0; }
 .acciones-tabla { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 .acciones-tabla .btn, .acciones-tabla .btn-linea { min-height: 36px; padding: 8px 12px; }
@@ -376,17 +385,66 @@ a.direccion-corta { display: inline-block; max-width: 240px; margin: 0; padding:
 
 @media (max-width: 980px) {
     .app { grid-template-columns: 1fr; }
-    .side { position: relative; height: auto; padding: 14px; }
-    .side nav { display: flex; gap: 6px; overflow: auto; }
-    .side nav a { white-space: nowrap; }
-    .marca { margin-bottom: 12px; }
-    .sesion { display: none; }
-    main, .acceso { padding: 20px 16px 36px; }
-    .grid-cifras, .cifras-empresas, .dos, .tablero, .fila-form, .historial li, .acceso-marco, .filtros { grid-template-columns: 1fr; }
-    .encabezado { display: grid; }
-    .acceso-relato { min-height: 280px; padding: 22px 18px; }
-    .acceso-relato h2 { font-size: 3rem; }
+    .side {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        height: auto;
+        padding: 10px 12px 8px;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-areas: "marca sesion" "nav nav";
+        align-items: center;
+        gap: 8px 12px;
+    }
+    .marca { grid-area: marca; margin: 0; }
+    .marca-logo { max-width: 128px; padding: 6px 8px; border-radius: 12px; }
+    .side nav {
+        grid-area: nav;
+        flex: none;
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
+    .side nav a { white-space: nowrap; flex: 0 0 auto; padding: 9px 12px; }
+    .sesion {
+        grid-area: sesion;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 6px 8px;
+        margin: 0;
+        padding: 8px 10px;
+    }
+    .sesion p { margin: 0; }
+    .sesion form { margin: 0; }
+    button.salir { width: auto; margin: 0; min-height: 36px; padding: 8px 12px; }
+    main, .acceso { padding: 18px 14px 40px; }
+    .grid-cifras, .cifras-empresas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dos, .tablero, .fila-form, .acceso-marco, .filtros, .filtros-fechas { grid-template-columns: 1fr; }
+    .historial li { grid-template-columns: 72px minmax(0, 1fr); }
+    .encabezado { display: grid; align-items: start; }
+    .encabezado h1 { font-size: clamp(2rem, 9vw, 2.8rem); }
+    .acciones .btn, .acciones .btn-linea, .filtros .btn { min-height: 44px; }
+    .buscar { flex-wrap: wrap; }
+    .buscar input { max-width: none; min-width: 0; flex: 1; }
+    .mapa { height: 280px; }
+    .parada { grid-template-columns: 36px minmax(0, 1fr); }
+    .parada .btn-linea { grid-column: 2; justify-self: start; }
+    .acceso-relato { min-height: 240px; padding: 22px 18px; }
+    .acceso-relato h2 { font-size: clamp(2.4rem, 12vw, 3.2rem); }
+    .acceso { padding: 24px 16px 36px; }
     .ruta-dibujo { display: none; }
+    .panel h2 { font-size: 1.4rem; }
+    .cifra strong { font-size: 1.45rem; }
+    .cifra::after { width: 64px; height: 64px; right: -18px; top: -22px; }
+}
+
+@media (max-width: 420px) {
+    .sesion p:not(:first-child) { display: none; }
+    .guia { padding: 20px 14px 48px; }
 }
 
 .guia { max-width: 720px; margin: 0 auto; padding: 32px 20px 64px; }

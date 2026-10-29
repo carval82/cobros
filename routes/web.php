@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\PrestamoController;
 use App\Http\Controllers\RegistroEmpresaController;
+use App\Http\Controllers\RendimientoController;
 use App\Http\Controllers\RutaController;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
@@ -38,7 +39,12 @@ $cartera = function () {
     Route::post('/prestamos/{prestamo}/refinanciar', [PrestamoController::class, 'refinanciar'])->middleware('puede:prestamos.refinanciar')->name('prestamos.refinanciar');
     Route::post('/cuotas/{cuota}/aplazar', [PrestamoController::class, 'aplazar'])->middleware('puede:cobros.registrar')->name('cuotas.aplazar');
 
+    Route::get('/mi-rendimiento', [RendimientoController::class, 'mio'])->name('rendimiento.mio');
+    Route::get('/mi-rendimiento/datos', [RendimientoController::class, 'datosMios'])->name('rendimiento.mio.datos');
+
     Route::middleware('puede:usuarios.gestionar')->group(function () {
+        Route::get('/rendimiento', [RendimientoController::class, 'index'])->name('rendimiento');
+        Route::get('/rendimiento/datos', [RendimientoController::class, 'datos'])->name('rendimiento.datos');
         Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
         Route::get('/usuarios/datos', [UsuarioController::class, 'datos'])->name('usuarios.datos');
         Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store');
