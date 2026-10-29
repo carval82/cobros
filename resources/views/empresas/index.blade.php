@@ -6,7 +6,7 @@
     <header class="encabezado">
         <div>
             <h1>Empresas</h1>
-            <p>Cada empresa tiene su propia cartera. Entra a una para cobrar.</p>
+            <p>Cada empresa nueva abre su propia base de datos. La prueba dura 30 días; después se activa con el código de solicitud.</p>
         </div>
     </header>
 
@@ -19,16 +19,16 @@
             </label>
             <div class="fila-form">
                 <label>Usuario de esa empresa
-                    <input name="usuario_nombre" value="{{ old('usuario_nombre') }}">
+                    <input name="usuario_nombre" value="{{ old('usuario_nombre') }}" required>
                 </label>
                 <label>Correo
-                    <input type="email" name="usuario_email" value="{{ old('usuario_email') }}">
+                    <input type="email" name="usuario_email" value="{{ old('usuario_email') }}" required>
                 </label>
             </div>
             <label>Contraseña
-                <input type="password" name="usuario_password" autocomplete="new-password">
+                <input type="password" name="usuario_password" autocomplete="new-password" required>
             </label>
-            <p class="ayuda">El usuario es opcional. Si lo dejas vacío, solo el maestro entra a esa cartera.</p>
+            <p class="ayuda">Ese usuario entra directo a su base. El maestro también puede abrirla desde aquí.</p>
             <button class="btn" type="submit">Crear y entrar</button>
         </form>
     </section>
@@ -42,15 +42,30 @@
                 <thead>
                     <tr>
                         <th>Empresa</th>
-                        <th class="num">Clientes</th>
+                        <th>Base</th>
+                        <th>Licencia</th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($empresas as $empresa)
                         <tr>
-                            <td>{{ $empresa->nombre }}</td>
-                            <td class="num">{{ $empresa->clientes_count }}</td>
+                            <td>
+                                {{ $empresa->nombre }}
+                                @if ($empresa->email)
+                                    <div class="muted">{{ $empresa->email }}</div>
+                                @endif
+                                @if ($empresa->codigo_solicitud)
+                                    <div class="muted">Solicitud {{ $empresa->codigo_solicitud }}</div>
+                                @endif
+                            </td>
+                            <td>{{ $empresa->base_datos ?: 'Principal, en la base central' }}</td>
+                            <td>
+                                {{ $empresa->plan }}
+                                @if ($empresa->fecha_vencimiento)
+                                    <div class="muted">hasta {{ $empresa->fecha_vencimiento->format('d/m/Y') }}</div>
+                                @endif
+                            </td>
                             <td class="num">
                                 <form method="post" action="{{ route('empresas.entrar', $empresa) }}">
                                     @csrf

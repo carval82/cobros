@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\UsaBaseTenant;
 use App\Support\EmpresaActual;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cuota extends Model
 {
+    use UsaBaseTenant;
+
     protected static function booted(): void
     {
         static::addGlobalScope('empresa', function (Builder $query) {

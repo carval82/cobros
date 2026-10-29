@@ -41,6 +41,11 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
+    public function getConnectionName(): ?string
+    {
+        return config('tenencia.central') ?: parent::getConnectionName();
+    }
+
     protected function casts(): array
     {
         return [

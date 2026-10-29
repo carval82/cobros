@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\UsaBaseTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PagoCuota extends Model
 {
+    use UsaBaseTenant;
     protected $fillable = [
         'pago_id',
         'cuota_id',

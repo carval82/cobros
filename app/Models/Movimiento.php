@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use App\Models\Concerns\FiltraEmpresa;
+use App\Models\Concerns\UsaBaseTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Movimiento extends Model
 {
-    use FiltraEmpresa;
+    use FiltraEmpresa, UsaBaseTenant;
 
     protected $fillable = [
         'empresa_id',

@@ -9,6 +9,10 @@ class EmpresaActual
 {
     public static function restringe(): bool
     {
+        if (Tenencia::activa()) {
+            return false;
+        }
+
         $usuario = auth()->user();
 
         if (! $usuario instanceof User) {

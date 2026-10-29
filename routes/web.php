@@ -22,6 +22,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/empresas/salir', [EmpresaController::class, 'salir'])->name('empresas.salir');
 
     Route::middleware('empresa')->group(function () {
+    Route::get('/licencia', [EmpresaController::class, 'licencia'])->name('licencia');
+    Route::post('/licencia', [EmpresaController::class, 'activar'])->name('licencia.activar');
+
+    Route::middleware('vigente')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/atrasados', [DashboardController::class, 'atrasados'])->name('atrasados');
     Route::get('/ruta', [RutaController::class, 'index'])->name('ruta');
@@ -41,5 +45,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/prestamos/{prestamo}/reanudar', [PrestamoController::class, 'reanudar'])->name('prestamos.reanudar');
     Route::post('/prestamos/{prestamo}/anular', [PrestamoController::class, 'anular'])->name('prestamos.anular');
     Route::post('/cuotas/{cuota}/aplazar', [PrestamoController::class, 'aplazar'])->name('cuotas.aplazar');
+    });
     });
 });

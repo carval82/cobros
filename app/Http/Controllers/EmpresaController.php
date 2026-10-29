@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Empresa;
-use App\Models\User;
+use App\Services\ActivacionLicencia;
+use App\Services\ProvisionarTenant;
+use App\Support\EmpresaActual;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -18,47 +20,98 @@ class EmpresaController extends Controller
         }
 
         return view('empresas.index', [
-            'empresas' => Empresa::query()->withCount('clientes')->orderBy('nombre')->get(),
+            'empresas' => Empresa::query()->orderBy('nombre')->get(),
             'activa' => session('empresa_id'),
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, ProvisionarTenant $provisionar): RedirectResponse
     {
         abort_unless($request->user()->es_maestro, 403);
 
         $datos = $request->validate([
             'nombre' => ['required', 'string', 'max:120'],
-            'usuario_nombre' => ['nullable', 'string', 'max:120'],
-            'usuario_email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
-            'usuario_password' => ['nullable', 'string', 'min:8'],
+            'usuario_nombre' => ['required', 'string', 'max:120'],
+            'usuario_email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'usuario_password' => ['required', 'string', 'min:8'],
         ], [
             'nombre.required' => 'Escribe el nombre de la empresa.',
+            'usuario_nombre.required' => 'Escribe el nombre de quien va a entrar.',
+            'usuario_email.required' => 'Escribe el correo de esa empresa.',
             'usuario_email.unique' => 'Ese correo ya tiene una cuenta.',
-            'usuario_password.min' => 'La contraseña del usuario necesita al menos 8 caracteres.',
+            'usuario_password.required' => 'Escribe una contraseña para esa empresa.',
+            'usuario_password.min' => 'La contraseña necesita al menos 8 caracteres.',
         ]);
-
-        if (($datos['usuario_email'] ?? null) && empty($datos['usuario_password'])) {
-            return back()->withErrors(['usuario_password' => 'Escribe una contraseña para ese usuario.'])->withInput();
-        }
 
         $empresa = Empresa::create([
             'nombre' => $datos['nombre'],
             'slug' => $this->slug($datos['nombre']),
+            'email' => $datos['usuario_email'],
+            'activo' => true,
+            'plan' => 'demo',
+            'fecha_vencimiento' => now()->addDays(30),
         ]);
 
-        if (! empty($datos['usuario_email'])) {
-            User::create([
-                'name' => $datos['usuario_nombre'] ?: $datos['nombre'],
-                'email' => $datos['usuario_email'],
-                'password' => $datos['usuario_password'],
-                'empresa_id' => $empresa->id,
-            ]);
+        try {
+            $provisionar->aprovisionar(
+                $empresa,
+                $datos['usuario_nombre'],
+                $datos['usuario_email'],
+                $datos['usuario_password']
+            );
+        } catch (\Throwable $e) {
+            $empresa->delete();
+
+            return back()
+                ->withErrors(['nombre' => 'No se pudo crear la base de la empresa: '.$e->getMessage()])
+                ->withInput();
         }
 
         session(['empresa_id' => $empresa->id]);
 
-        return redirect()->route('dashboard')->with('ok', 'Empresa lista. Ya estás trabajando en '.$empresa->nombre.'.');
+        return redirect()
+            ->route('dashboard')
+            ->with('ok', 'Empresa creada con su propia base. Tiene 30 días de prueba. El código de solicitud está en Empresas.');
+    }
+
+    public function licencia(): View|RedirectResponse
+    {
+        $empresa = EmpresaActual::empresa();
+
+        if (! $empresa) {
+            return redirect()->route('empresas.index');
+        }
+
+        return view('empresas.licencia', ['empresa' => $empresa]);
+    }
+
+    public function activar(Request $request): RedirectResponse
+    {
+        $empresa = EmpresaActual::empresa();
+        abort_unless($empresa, 404);
+
+        $datos = $request->validate([
+            'codigo' => ['required', 'string', 'max:40'],
+        ], [
+            'codigo.required' => 'Pega el código de activación.',
+        ]);
+
+        $resuelto = ActivacionLicencia::resolver($datos['codigo'], (string) $empresa->codigo_solicitud);
+
+        if (! $resuelto) {
+            return back()->withErrors(['codigo' => 'Ese código no corresponde a esta empresa.']);
+        }
+
+        $empresa->update([
+            'activo' => true,
+            'plan' => $resuelto['plan'],
+            'licencia_activada_at' => now(),
+            'fecha_vencimiento' => now()->addDays($resuelto['days']),
+        ]);
+
+        return redirect()
+            ->route('dashboard')
+            ->with('ok', 'Licencia '.$resuelto['plan'].' activa por '.$resuelto['days'].' días.');
     }
 
     public function entrar(Empresa $empresa): RedirectResponse

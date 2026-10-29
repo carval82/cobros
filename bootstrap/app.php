@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
         $middleware->alias([
             'empresa' => \App\Http\Middleware\AsegurarEmpresa::class,
+            'vigente' => \App\Http\Middleware\LicenciaVigente::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

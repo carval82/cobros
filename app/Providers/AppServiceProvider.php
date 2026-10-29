@@ -22,6 +22,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $nombre = config('database.default');
+        $configuracion = config('database.connections.'.$nombre);
+
+        if (($configuracion['database'] ?? null) === ':memory:') {
+            config(['tenencia.central' => $nombre]);
+        } else {
+            config(['database.connections.central' => $configuracion]);
+            config(['tenencia.central' => 'central']);
+        }
+
+        if (config('session.driver') === 'database' && ! config('session.connection')) {
+            config(['session.connection' => config('tenencia.central')]);
+        }
+
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }

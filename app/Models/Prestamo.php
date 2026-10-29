@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\FiltraEmpresa;
+use App\Models\Concerns\UsaBaseTenant;
 use App\Services\PlanPagos;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Prestamo extends Model
 {
-    use FiltraEmpresa;
+    use FiltraEmpresa, UsaBaseTenant;
 
     protected $fillable = [
         'empresa_id',
