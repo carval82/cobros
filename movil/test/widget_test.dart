@@ -10,8 +10,9 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const CobrosApp());
     await tester.pumpAndSettle();
-    expect(find.text('Entrar'), findsOneWidget);
+    expect(find.text('Crear empresa'), findsOneWidget);
     expect(find.text('Servidor'), findsOneWidget);
+    expect(find.text('Ya tengo empresa'), findsOneWidget);
     expect(find.byType(Image), findsOneWidget);
   });
 }

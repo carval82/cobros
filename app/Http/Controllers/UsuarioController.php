@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Support\EmpresaActual;
 use App\Support\Permisos;
+use App\Support\Tenencia;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -12,6 +14,51 @@ use Illuminate\View\View;
 
 class UsuarioController extends Controller
 {
+    public function sesion(): JsonResponse
+    {
+        $usuario = auth()->user();
+        $empresa = EmpresaActual::empresa();
+
+        if ($empresa) {
+            Tenencia::conectar($empresa);
+        }
+
+        return response()->json([
+            'nombre' => $usuario->name,
+            'correo' => $usuario->email,
+            'rol' => $usuario->es_maestro ? 'maestro' : ($usuario->rol ?: 'administrador'),
+            'empresa' => $empresa?->nombre,
+            'direccion' => $empresa?->direccion(),
+            'tenant' => $empresa?->uuid,
+            'usuarios' => $usuario->puede('usuarios.gestionar'),
+            'prestamos' => $usuario->puede('prestamos.crear'),
+            'cobros' => $usuario->puede('cobros.registrar'),
+            'token' => csrf_token(),
+        ]);
+    }
+
+    public function datos(): JsonResponse
+    {
+        $empresaId = EmpresaActual::id();
+
+        return response()->json([
+            'roles' => Permisos::ROLES,
+            'token' => csrf_token(),
+            'usuarios' => User::query()
+                ->where('empresa_id', $empresaId)
+                ->where('es_maestro', false)
+                ->orderBy('name')
+                ->get(['id', 'name', 'email', 'rol'])
+                ->map(fn (User $usuario) => [
+                    'id' => $usuario->id,
+                    'nombre' => $usuario->name,
+                    'correo' => $usuario->email,
+                    'rol' => $usuario->rol ?: 'administrador',
+                ])
+                ->values(),
+        ]);
+    }
+
     public function index(): View
     {
         $empresaId = EmpresaActual::id();
@@ -26,7 +73,7 @@ class UsuarioController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $datos = $this->validar($request);
 
@@ -38,6 +85,14 @@ class UsuarioController extends Controller
             'es_maestro' => false,
             'rol' => $datos['rol'],
         ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'nombre' => $datos['name'],
+                'correo' => $datos['email'],
+                'rol' => $datos['rol'],
+            ]);
+        }
 
         return back()->with('ok', $datos['name'].' ya puede entrar con el rol '.Permisos::ROLES[$datos['rol']].'.');
     }

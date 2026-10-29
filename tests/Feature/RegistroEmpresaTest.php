@@ -48,6 +48,27 @@ class RegistroEmpresaTest extends TestCase
         $this->assertStringContainsString('/tenant/'.$empresa->uuid, session('ok'));
     }
 
+    public function test_el_celular_recibe_la_direccion_y_la_sesion(): void
+    {
+        $this->postJson('/registrar', [
+            'nombre' => 'Sur',
+            'usuario_nombre' => 'Beto',
+            'usuario_email' => 'beto@sur.test',
+            'usuario_password' => 'secreto12',
+            'usuario_password_confirmation' => 'secreto12',
+        ])->assertOk()
+            ->assertJsonPath('rol', 'administrador')
+            ->assertJsonPath('empresa', 'Sur');
+
+        $empresa = Empresa::query()->where('email', 'beto@sur.test')->first();
+
+        $this->getJson('/sesion/datos')
+            ->assertOk()
+            ->assertJsonPath('tenant', $empresa->uuid)
+            ->assertJsonPath('rol', 'administrador')
+            ->assertJsonPath('usuarios', true);
+    }
+
     public function test_el_administrador_crea_usuarios_y_el_rol_limita(): void
     {
         $empresa = Empresa::create([

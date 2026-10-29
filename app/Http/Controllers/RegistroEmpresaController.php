@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Empresa;
 use App\Services\ProvisionarTenant;
 use App\Support\Tenencia;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -43,7 +44,7 @@ class RegistroEmpresaController extends Controller
         return $tablero->index();
     }
 
-    public function store(Request $request, ProvisionarTenant $provisionar): RedirectResponse
+    public function store(Request $request, ProvisionarTenant $provisionar): RedirectResponse|JsonResponse
     {
         $datos = $request->validate([
             'nombre' => ['required', 'string', 'max:120'],
@@ -80,6 +81,12 @@ class RegistroEmpresaController extends Controller
             $empresa->delete();
             Tenencia::cerrar();
 
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'No se pudo crear la base de la empresa: '.$e->getMessage(),
+                ], 500);
+            }
+
             return back()
                 ->withErrors(['nombre' => 'No se pudo crear la base de la empresa: '.$e->getMessage()])
                 ->withInput();
@@ -88,6 +95,15 @@ class RegistroEmpresaController extends Controller
         Auth::login($administrador);
         $request->session()->regenerate();
         $empresa->refresh();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'empresa' => $empresa->nombre,
+                'direccion' => $empresa->direccion(),
+                'tenant' => $empresa->uuid,
+                'rol' => 'administrador',
+            ]);
+        }
 
         return redirect()
             ->route('tenant.dashboard', ['tenant' => $empresa->uuid])

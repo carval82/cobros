@@ -14,7 +14,7 @@ class CobrosApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Cobros',
+      title: 'Cobras',
       debugShowCheckedModeBanner: false,
       theme: temaCobros(),
       home: const Entrada(),

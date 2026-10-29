@@ -33,6 +33,7 @@ $cartera = function () {
 
     Route::middleware('puede:usuarios.gestionar')->group(function () {
         Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
+        Route::get('/usuarios/datos', [UsuarioController::class, 'datos'])->name('usuarios.datos');
         Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store');
         Route::post('/usuarios/{usuario}', [UsuarioController::class, 'update'])->name('usuarios.update');
     });
@@ -56,6 +57,7 @@ Route::middleware('auth')->group(function () use ($cartera) {
     Route::get('/acerca', [EmpresaController::class, 'acerca'])->name('acerca');
     Route::get('/acerca/datos', [EmpresaController::class, 'acercaDatos'])->name('acerca.datos');
     Route::post('/acerca', [EmpresaController::class, 'activar'])->name('acerca.activar');
+    Route::get('/sesion/datos', [UsuarioController::class, 'sesion'])->name('sesion.datos');
 
     Route::middleware('empresa')->group(function () use ($cartera) {
         Route::get('/licencia', [EmpresaController::class, 'licencia'])->name('licencia');
@@ -80,6 +82,7 @@ Route::prefix('tenant/{tenant}')
             Route::get('/acerca', [EmpresaController::class, 'acerca'])->name('acerca');
             Route::get('/acerca/datos', [EmpresaController::class, 'acercaDatos'])->name('acerca.datos');
             Route::post('/acerca', [EmpresaController::class, 'activar'])->name('acerca.activar');
+            Route::get('/sesion/datos', [UsuarioController::class, 'sesion'])->name('sesion.datos');
             Route::get('/licencia', [EmpresaController::class, 'licencia'])->name('licencia');
             Route::post('/licencia', [EmpresaController::class, 'activar'])->name('licencia.activar');
 
