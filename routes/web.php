@@ -5,10 +5,12 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmpresaController;
+use App\Http\Controllers\LicenciaAdminController;
 use App\Http\Controllers\PrestamoController;
 use App\Http\Controllers\RegistroEmpresaController;
 use App\Http\Controllers\RendimientoController;
 use App\Http\Controllers\RutaController;
+use App\Http\Controllers\UbicacionCobradorController;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
@@ -42,7 +44,11 @@ $cartera = function () {
     Route::get('/mi-rendimiento', [RendimientoController::class, 'mio'])->name('rendimiento.mio');
     Route::get('/mi-rendimiento/datos', [RendimientoController::class, 'datosMios'])->name('rendimiento.mio.datos');
 
+    Route::post('/ubicacion', [UbicacionCobradorController::class, 'guardar'])->middleware('puede:cobros.registrar')->name('ubicacion.guardar');
+
     Route::middleware('puede:usuarios.gestionar')->group(function () {
+        Route::get('/en-vivo', [UbicacionCobradorController::class, 'index'])->name('en-vivo');
+        Route::get('/en-vivo/datos', [UbicacionCobradorController::class, 'datos'])->name('en-vivo.datos');
         Route::get('/rendimiento', [RendimientoController::class, 'index'])->name('rendimiento');
         Route::get('/rendimiento/datos', [RendimientoController::class, 'datos'])->name('rendimiento.datos');
         Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
@@ -68,6 +74,9 @@ Route::middleware('auth')->group(function () use ($cartera) {
     Route::post('/empresas', [EmpresaController::class, 'store'])->name('empresas.store');
     Route::post('/empresas/{empresa}/entrar', [EmpresaController::class, 'entrar'])->name('empresas.entrar');
     Route::post('/empresas/salir', [EmpresaController::class, 'salir'])->name('empresas.salir');
+    Route::get('/licencias', [LicenciaAdminController::class, 'index'])->name('licencias.index');
+    Route::post('/licencias/generar', [LicenciaAdminController::class, 'generar'])->name('licencias.generar');
+    Route::post('/licencias/{empresa}', [LicenciaAdminController::class, 'aplicar'])->name('licencias.aplicar');
     Route::get('/acerca', [EmpresaController::class, 'acerca'])->name('acerca');
     Route::get('/acerca/datos', [EmpresaController::class, 'acercaDatos'])->name('acerca.datos');
     Route::post('/acerca', [EmpresaController::class, 'activar'])->name('acerca.activar');

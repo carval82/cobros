@@ -15,7 +15,8 @@
             </a>
             <nav>
                 @if (auth()->user()->es_maestro)
-                    <a href="{{ cobro_route('empresas.index') }}" @class(['active' => request()->routeIs('empresas.*')])>Empresas</a>
+                    <a href="{{ route('empresas.index') }}" @class(['active' => request()->routeIs('empresas.*')])>Empresas</a>
+                    <a href="{{ route('licencias.index') }}" @class(['active' => request()->routeIs('licencias.*')])>Licencias</a>
                 @endif
                 @if (! auth()->user()->es_maestro || session('empresa_id') || app()->bound('empresa.tenant'))
                     <a href="{{ cobro_route('dashboard') }}" @class(['active' => request()->routeIs('dashboard', 'tenant.dashboard')])>Hoy</a>
@@ -28,6 +29,7 @@
                     @if (auth()->user()->puede('usuarios.gestionar'))
                         <a href="{{ cobro_route('usuarios.index') }}" @class(['active' => request()->routeIs('usuarios.*', 'tenant.usuarios.*')])>Usuarios</a>
                         <a href="{{ cobro_route('rendimiento') }}" @class(['active' => request()->routeIs('rendimiento', 'rendimiento.datos', 'tenant.rendimiento', 'tenant.rendimiento.datos')])>Rendimiento</a>
+                        <a href="{{ cobro_route('en-vivo') }}" @class(['active' => request()->routeIs('en-vivo', 'en-vivo.datos', 'tenant.en-vivo', 'tenant.en-vivo.datos')])>En vivo</a>
                     @elseif (auth()->user()->puede('cobros.registrar'))
                         <a href="{{ cobro_route('rendimiento.mio') }}" @class(['active' => request()->routeIs('rendimiento.mio', 'tenant.rendimiento.mio')])>Mi rendimiento</a>
                     @endif

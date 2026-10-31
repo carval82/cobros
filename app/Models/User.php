@@ -27,6 +27,9 @@ class User extends Authenticatable
         'empresa_id',
         'rol',
         'porcentaje_cobro',
+        'latitud',
+        'longitud',
+        'ubicacion_en',
     ];
 
     /**
@@ -56,6 +59,9 @@ class User extends Authenticatable
             'password' => 'hashed',
             'es_maestro' => 'boolean',
             'porcentaje_cobro' => 'decimal:2',
+            'latitud' => 'float',
+            'longitud' => 'float',
+            'ubicacion_en' => 'datetime',
         ];
     }
 

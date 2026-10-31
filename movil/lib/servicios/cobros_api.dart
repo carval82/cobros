@@ -240,6 +240,16 @@ class CobrosApi {
 
   Future<Map<String, dynamic>> miRendimiento() => _cartera('GET', '/mi-rendimiento/datos');
 
+  Future<Map<String, dynamic>> enVivo() => _cartera('GET', '/en-vivo/datos');
+
+  Future<void> reportarUbicacion(double latitud, double longitud) async {
+    await _cartera('POST', '/ubicacion', campos: {
+      '_token': token ?? '',
+      'latitud': '$latitud',
+      'longitud': '$longitud',
+    });
+  }
+
   Future<Map<String, dynamic>> _cartera(String metodo, String ruta, {Map<String, String>? campos}) async {
     if (tenant == null || tenant!.isEmpty) {
       throw Exception('Entra con la dirección de la empresa.');

@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../formato.dart';
 import '../piezas.dart';
 import '../servicios/cobros_api.dart';
 import '../servicios/sesion_local.dart';
+import '../servicios/ubicacion.dart';
 import 'acerca.dart';
+import 'en_vivo.dart';
 import 'entrada.dart';
 import 'clientes.dart';
 import 'hoy.dart';
@@ -25,6 +29,13 @@ class _InicioState extends State<Inicio> {
   Map<String, dynamic>? _sesion;
   String? _error;
   int _pestana = 0;
+  Timer? _rastreo;
+
+  @override
+  void dispose() {
+    _rastreo?.cancel();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -36,10 +47,30 @@ class _InicioState extends State<Inicio> {
     try {
       final datos = await widget.api.sesion();
       await guardarConfiguracion(widget.api, correo: datos['correo']?.toString());
-      if (mounted) setState(() => _sesion = datos);
+      if (!mounted) return;
+      setState(() => _sesion = datos);
+      _seguir(datos);
     } catch (e) {
       if (mounted) setState(() => _error = textoError(e));
     }
+  }
+
+  void _seguir(Map<String, dynamic> datos) {
+    if (datos['rol']?.toString() != 'cobrador') {
+      _rastreo?.cancel();
+      _rastreo = null;
+      return;
+    }
+    if (_rastreo != null) return;
+    _enviarPunto();
+    _rastreo = Timer.periodic(const Duration(seconds: 25), (_) => _enviarPunto());
+  }
+
+  Future<void> _enviarPunto() async {
+    try {
+      final punto = await puntoActual();
+      await widget.api.reportarUbicacion(punto.latitud, punto.longitud);
+    } catch (_) {}
   }
 
   @override
@@ -148,6 +179,13 @@ class _Mas extends StatelessWidget {
         ],
         const SizedBox(height: 16),
         if (puedeUsuarios) ...[
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => EnVivo(api: api)));
+            },
+            child: const Text('Cobradores en vivo'),
+          ),
+          const SizedBox(height: 8),
           FilledButton(
             onPressed: () {
               Navigator.of(context).push(MaterialPageRoute(builder: (_) => RendimientoVista(api: api, propio: false)));

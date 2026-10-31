@@ -268,7 +268,7 @@ textarea { min-height: 90px; resize: vertical; }
 .equipo-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .equipo-form select { width: 150px; }
 .equipo-form input { width: 88px; }
-.equipo-form .btn { width: auto; }
+.equipo-form .btn, .equipo-form .btn-linea { width: auto; }
 .buscar { display: flex; gap: 8px; margin-bottom: 16px; }
 .buscar input { max-width: 420px; }
 .vacio { color: var(--muted); padding: 12px 0; }
