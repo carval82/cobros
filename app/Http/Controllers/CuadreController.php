@@ -71,7 +71,7 @@ class CuadreController extends Controller
             }
             $caja->update(['capital' => $valor, 'nombre' => $nombre]);
         } else {
-            if (CajaCobro::query()->where('user_id', $usuario->id)->where('abierto', true)->exists()) {
+            if (! CajaCobro::puedeAbrirOtro($usuario)) {
                 throw ValidationException::withMessages([
                     'valor_inicial' => 'Ya tienes un cobro abierto. Cierra el día y sigue con ese.',
                 ]);
@@ -277,8 +277,7 @@ class CuadreController extends Controller
 
     private function puedeAperturar(User $usuario): bool
     {
-        return $usuario->puede('cobros.registrar')
-            && ! CajaCobro::query()->where('user_id', $usuario->id)->where('abierto', true)->exists();
+        return CajaCobro::puedeAbrirOtro($usuario);
     }
 
     private function fecha(Request $request): string

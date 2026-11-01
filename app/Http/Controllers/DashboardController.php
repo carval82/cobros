@@ -47,8 +47,7 @@ class DashboardController extends Controller
             'cobradoresEmpresa' => CajaCobro::cobradoresDeLaEmpresa(),
             'equipoIds' => collect($activo['cobradores'] ?? [])->pluck('id')->map(fn ($id) => (int) $id)->all(),
             'fecha' => now()->toDateString(),
-            'puedeAperturar' => $usuario instanceof User && $usuario->puede('cobros.registrar')
-                && ! CajaCobro::query()->where('user_id', $usuario->id)->where('abierto', true)->exists(),
+            'puedeAperturar' => $usuario instanceof User && CajaCobro::puedeAbrirOtro($usuario),
             'detenidos' => $escritorio['detenidos'],
             'movimientos' => $escritorio['movimientos'],
         ]);

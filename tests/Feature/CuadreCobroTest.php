@@ -321,5 +321,26 @@ class CuadreCobroTest extends TestCase
         $this->actingAs($maria)->get('/')->assertOk()->assertDontSee('<p>Norte</p>', false);
         $this->actingAs($luis)->get('/cobro/'.$cajaId.'/entrar')->assertRedirect();
         $this->actingAs($luis)->get('/')->assertOk()->assertSee('Con Luis Cobra');
+
+        $this->actingAs($admin)->get('/cobro/salir')->assertRedirect();
+        $this->actingAs($admin)->get('/')
+            ->assertOk()
+            ->assertSee('<p>Norte</p>', false)
+            ->assertSee('Nuevo cobro');
+        $this->actingAs($admin)->post('/cuadre/abrir', [
+            'valor_inicial' => 200000,
+            'nombre' => 'Sur',
+            'seguir' => 'hoy',
+        ])->assertRedirect();
+        $this->assertSame(2, \App\Models\CajaCobro::query()->where('user_id', $admin->id)->where('abierto', true)->count());
+
+        $this->actingAs($ajeno)->post('/cuadre/abrir', [
+            'valor_inicial' => 1000,
+            'nombre' => 'Uno',
+        ])->assertRedirect();
+        $this->actingAs($ajeno)->post('/cuadre/abrir', [
+            'valor_inicial' => 1000,
+            'nombre' => 'Dos',
+        ])->assertSessionHasErrors('valor_inicial');
     }
 }

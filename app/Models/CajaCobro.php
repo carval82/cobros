@@ -125,6 +125,19 @@ class CajaCobro extends Model
             || $usuario->rol === 'consulta';
     }
 
+    public static function puedeAbrirOtro(User $usuario): bool
+    {
+        if (! $usuario->puede('cobros.registrar')) {
+            return false;
+        }
+
+        if ($usuario->es_maestro || $usuario->puede('usuarios.gestionar')) {
+            return true;
+        }
+
+        return ! static::query()->where('user_id', $usuario->id)->where('abierto', true)->exists();
+    }
+
     public static function visiblesPara(User $usuario)
     {
         return static::query()
