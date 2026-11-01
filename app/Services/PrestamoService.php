@@ -13,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 class PrestamoService
 {
-    public function crear(int $clienteId, int $capital, float $porcentaje, int $numeroCuotas, string $frecuencia, string $fechaPrimerPago, ?string $nota = null): Prestamo
+    public function crear(int $clienteId, int $capital, float $porcentaje, int $numeroCuotas, string $frecuencia, string $fechaPrimerPago, ?string $nota = null, ?int $cajaId = null): Prestamo
     {
         if ($clienteId < 1) {
             throw ValidationException::withMessages([
@@ -32,10 +32,11 @@ class PrestamoService
         $this->exigirCupoDemo($cliente);
         $plan = PlanPagos::simular($capital, $porcentaje, $numeroCuotas, $frecuencia, $fechaPrimerPago);
 
-        return DB::transaction(function () use ($cliente, $plan, $nota) {
+        return DB::transaction(function () use ($cliente, $plan, $nota, $cajaId) {
             $prestamo = Prestamo::create([
                 'empresa_id' => $cliente->empresa_id,
                 'cliente_id' => $cliente->id,
+                'caja_cobro_id' => $cajaId,
                 'capital' => $plan['capital'],
                 'porcentaje' => $plan['porcentaje'],
                 'interes' => $plan['interes'],
@@ -114,6 +115,7 @@ class PrestamoService
                 'nota' => $nota,
                 'latitud' => $latitud,
                 'longitud' => $longitud,
+                'caja_cobro_id' => $prestamo->caja_cobro_id,
             ]);
 
             if ($latitud !== null && $longitud !== null) {

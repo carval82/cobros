@@ -142,6 +142,23 @@ class _PrestamoVistaState extends State<PrestamoVista> {
     }
   }
 
+  String _enlaceSaldo(Map mapa, List cuotas) {
+    Map? proxima;
+    for (final item in cuotas) {
+      if (item is Map && entero(item['saldo']) > 0) {
+        proxima = item;
+        break;
+      }
+    }
+    return enlaceSaldoWhatsapp(
+      telefono: mapa['telefono']?.toString() ?? '',
+      nombre: mapa['cliente']?.toString() ?? 'cliente',
+      saldo: entero(mapa['saldo']),
+      proximaFecha: proxima?['fecha']?.toString(),
+      proximaValor: proxima == null ? null : entero(proxima['saldo']),
+    );
+  }
+
   Future<String?> _motivo(String titulo) {
     final campo = TextEditingController();
     return showDialog<String>(
@@ -221,6 +238,14 @@ class _PrestamoVistaState extends State<PrestamoVista> {
                     onPressed: () => abrirDestino(lat, lng),
                     icon: const Icon(Icons.navigation),
                     label: const Text('Cómo llegar'),
+                  ),
+                ],
+                if (numeroWhatsapp(mapa['telefono']?.toString()) != null) ...[
+                  const SizedBox(height: 10),
+                  FilledButton.icon(
+                    onPressed: () => abrirEnlace(_enlaceSaldo(mapa, cuotas)),
+                    icon: const Icon(Icons.chat),
+                    label: const Text('Enviar saldo por WhatsApp'),
                   ),
                 ],
               ],

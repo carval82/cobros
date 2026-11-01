@@ -240,6 +240,55 @@ class CobrosApi {
 
   Future<Map<String, dynamic>> miRendimiento() => _cartera('GET', '/mi-rendimiento/datos');
 
+  Future<Map<String, dynamic>> cuadre({String? fecha}) {
+    final consulta = fecha == null || fecha.isEmpty ? '' : '?fecha=$fecha';
+    return _cartera('GET', '/cuadre/datos$consulta');
+  }
+
+  Future<void> abrirCobro({required int valorInicial, String? nombre, int? cajaId}) async {
+    await _cartera('POST', '/cuadre/abrir', campos: {
+      '_token': token ?? '',
+      'valor_inicial': '$valorInicial',
+      'nombre': nombre ?? '',
+      if (cajaId != null) 'caja_id': '$cajaId',
+    });
+  }
+
+  Future<void> abrirDia(int cajaId) async {
+    await _cartera('POST', '/cuadre/dia', campos: {
+      '_token': token ?? '',
+      'caja_id': '$cajaId',
+    });
+  }
+
+  Future<void> cerrarDia({required int cajaId, required String decision, required String fecha}) async {
+    await _cartera('POST', '/cuadre/cerrar', campos: {
+      '_token': token ?? '',
+      'caja_id': '$cajaId',
+      'decision': decision,
+      'fecha': fecha,
+    });
+  }
+
+  Future<void> refuerzoCaja({required int cajaId, required int monto, required String fecha}) async {
+    await _cartera('POST', '/cuadre/refuerzo', campos: {
+      '_token': token ?? '',
+      'caja_id': '$cajaId',
+      'monto': '$monto',
+      'fecha': fecha,
+    });
+  }
+
+  Future<void> gastoCaja({required int cajaId, required int monto, required String fecha, String? nota}) async {
+    await _cartera('POST', '/cuadre/gastos', campos: {
+      '_token': token ?? '',
+      'caja_id': '$cajaId',
+      'monto': '$monto',
+      'fecha': fecha,
+      'nota': nota ?? '',
+    });
+  }
+
   Future<Map<String, dynamic>> enVivo() => _cartera('GET', '/en-vivo/datos');
 
   Future<void> reportarUbicacion(double latitud, double longitud) async {

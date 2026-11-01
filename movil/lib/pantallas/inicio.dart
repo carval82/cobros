@@ -8,6 +8,7 @@ import '../servicios/cobros_api.dart';
 import '../servicios/sesion_local.dart';
 import '../servicios/ubicacion.dart';
 import 'acerca.dart';
+import 'cuadre.dart';
 import 'en_vivo.dart';
 import 'entrada.dart';
 import 'clientes.dart';
@@ -178,6 +179,13 @@ class _Mas extends StatelessWidget {
           Text('Versión demo: hasta ${sesion['limite_demo']} préstamos. La clave se pega en Acerca de.'),
         ],
         const SizedBox(height: 16),
+        FilledButton(
+          onPressed: () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (_) => CuadreVista(api: api)));
+          },
+          child: const Text('Cuadre del día'),
+        ),
+        const SizedBox(height: 8),
         if (puedeUsuarios) ...[
           FilledButton(
             onPressed: () {

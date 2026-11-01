@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CajaCobro;
 use App\Models\Cuota;
 use App\Models\Movimiento;
 use App\Models\Pago;
 use App\Models\Prestamo;
+use App\Models\User;
+use App\Services\CuadreCobro;
 use App\Services\PrestamoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
@@ -40,6 +43,7 @@ class DashboardController extends Controller
             'cobrarHoy' => (int) $hoy->sum('saldo'),
             'mora' => (int) $atrasadas->sum('saldo'),
             'cobradoHoy' => (int) Pago::query()->whereDate('fecha', today())->sum('monto'),
+            'enCaja' => $this->enCaja(),
             'detenidos' => Prestamo::query()->where('estado', 'detenido')->count(),
             'movimientos' => Movimiento::query()->with('cliente')->latest('id')->limit(8)->get(),
         ]);
@@ -74,6 +78,18 @@ class DashboardController extends Controller
             'hoy' => $hoy->map(fn (Cuota $cuota) => $this->cuotaFila($cuota))->values(),
             'atrasadas' => $atrasadas->map(fn (Cuota $cuota) => $this->cuotaFila($cuota))->values(),
         ]);
+    }
+
+    private function enCaja(): int
+    {
+        $usuario = auth()->user();
+        if (! $usuario instanceof User) {
+            return 0;
+        }
+
+        return (int) CajaCobro::visiblesPara($usuario)->sum(
+            fn (CajaCobro $caja) => CuadreCobro::enCaja($caja)
+        );
     }
 
     public function atrasados(): View

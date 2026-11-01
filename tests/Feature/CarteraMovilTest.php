@@ -16,6 +16,7 @@ class CarteraMovilTest extends TestCase
     public function test_el_celular_crea_cliente_cobra_y_arma_la_ruta(): void
     {
         $this->actingAs(User::factory()->create());
+        $this->post('/cuadre/abrir', ['valor_inicial' => 500000])->assertRedirect();
 
         $this->postJson('/clientes', [
             'nombre' => 'Ana',
@@ -40,6 +41,8 @@ class CarteraMovilTest extends TestCase
         ])->assertOk();
 
         $prestamo = Prestamo::query()->first();
+        $this->assertSame(now()->addDay()->toDateString(), $prestamo->fecha_primer_pago->toDateString());
+        $prestamo->cuotas()->update(['fecha_vencimiento' => now()->toDateString()]);
 
         $this->getJson('/hoy/datos')
             ->assertOk()

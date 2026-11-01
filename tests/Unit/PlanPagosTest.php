@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Services\PlanPagos;
+use Carbon\Carbon;
 use PHPUnit\Framework\TestCase;
 
 class PlanPagosTest extends TestCase
@@ -35,5 +36,15 @@ class PlanPagosTest extends TestCase
 
         $this->assertSame([33, 33, 34], array_column($plan['filas'], 'valor'));
         $this->assertSame(['2026-11-02', '2026-11-03', '2026-11-04'], array_column($plan['filas'], 'fecha'));
+    }
+
+    public function test_la_primera_cuota_sale_del_dia_del_prestamo(): void
+    {
+        $prestamo = Carbon::parse('2026-10-31');
+
+        $this->assertSame('2026-11-01', PlanPagos::primeraFecha($prestamo, 'diario')->toDateString());
+        $this->assertSame('2026-11-08', PlanPagos::primeraFecha($prestamo, 'semanal')->toDateString());
+        $this->assertSame('2026-11-15', PlanPagos::primeraFecha($prestamo, 'quincenal')->toDateString());
+        $this->assertSame('2026-11-30', PlanPagos::primeraFecha($prestamo, 'mensual')->toDateString());
     }
 }

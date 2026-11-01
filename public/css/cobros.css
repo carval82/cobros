@@ -204,6 +204,7 @@ main { min-width: 0; padding: 32px 36px 56px; }
 }
 
 .cifra { padding: 18px 18px 16px; position: relative; overflow: hidden; }
+a.cifra { display: block; text-decoration: none; }
 .cifra::after {
     content: "";
     position: absolute;
@@ -286,6 +287,9 @@ textarea { min-height: 90px; resize: vertical; }
 a.direccion-corta { display: inline-block; max-width: 240px; margin: 0; padding: 8px 10px; font-size: 0.78rem; }
 .filtros { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; align-items: end; margin-bottom: 16px; }
 .filtros-fechas { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+.filtros-cuadre { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto; }
+.filtros-cuadre input, .filtros-cuadre select { min-width: 0; }
+.filtros-cuadre .btn { width: auto; white-space: nowrap; }
 .filtros-fechas input { min-width: 0; }
 .filtros-fechas .btn { width: auto; white-space: nowrap; }
 .filtros label { margin: 0; }
@@ -423,7 +427,7 @@ a.direccion-corta { display: inline-block; max-width: 240px; margin: 0; padding:
     button.salir { width: auto; margin: 0; min-height: 36px; padding: 8px 12px; }
     main, .acceso { padding: 18px 14px 40px; }
     .grid-cifras, .cifras-empresas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .dos, .tablero, .fila-form, .acceso-marco, .filtros, .filtros-fechas { grid-template-columns: 1fr; }
+    .dos, .tablero, .fila-form, .acceso-marco, .filtros, .filtros-fechas, .filtros-cuadre { grid-template-columns: 1fr; }
     .historial li { grid-template-columns: 72px minmax(0, 1fr); }
     .encabezado { display: grid; align-items: start; }
     .encabezado h1 { font-size: clamp(2rem, 9vw, 2.8rem); }

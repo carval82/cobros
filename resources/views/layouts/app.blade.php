@@ -20,6 +20,7 @@
                 @endif
                 @if (! auth()->user()->es_maestro || session('empresa_id') || app()->bound('empresa.tenant'))
                     <a href="{{ cobro_route('dashboard') }}" @class(['active' => request()->routeIs('dashboard', 'tenant.dashboard')])>Hoy</a>
+                    <a href="{{ cobro_route('cuadre') }}" @class(['active' => request()->routeIs('cuadre', 'cuadre.datos', 'tenant.cuadre', 'tenant.cuadre.datos')])>Cuadre</a>
                     <a href="{{ cobro_route('ruta') }}" @class(['active' => request()->routeIs('ruta', 'tenant.ruta')])>Ruta</a>
                     <a href="{{ cobro_route('atrasados') }}" @class(['active' => request()->routeIs('atrasados', 'tenant.atrasados')])>Atrasados</a>
                     <a href="{{ cobro_route('clientes.index') }}" @class(['active' => request()->routeIs('clientes.*', 'tenant.clientes.*')])>Clientes</a>

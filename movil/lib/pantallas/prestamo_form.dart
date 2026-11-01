@@ -20,7 +20,8 @@ class _PrestamoFormState extends State<PrestamoForm> {
   final _cuotas = TextEditingController(text: '5');
   final _nota = TextEditingController();
   String _frecuencia = 'semanal';
-  DateTime _fecha = DateTime.now();
+  DateTime _fecha = primeraCuota(DateTime.now(), 'semanal');
+  bool _fechaManual = false;
   String? _error;
   bool _ocupado = false;
 
@@ -82,7 +83,7 @@ class _PrestamoFormState extends State<PrestamoForm> {
         children: [
           Text(widget.clienteNombre, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          const Text('El préstamo sale de este cliente. Cada abono queda en este plan, no en otro.'),
+          const Text('El préstamo entra al cobro que tengas abierto hoy. El cliente puede tener préstamos en varios cobros; cada préstamo tiene un solo cliente.'),
           const SizedBox(height: 16),
           TextField(controller: _capital, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Capital prestado'), onChanged: (_) => setState(() {})),
           const SizedBox(height: 12),
@@ -100,7 +101,11 @@ class _PrestamoFormState extends State<PrestamoForm> {
               DropdownMenuItem(value: 'mensual', child: Text('Mensual')),
             ],
             onChanged: (valor) {
-              if (valor != null) setState(() => _frecuencia = valor);
+              if (valor == null) return;
+              setState(() {
+                _frecuencia = valor;
+                if (!_fechaManual) _fecha = primeraCuota(DateTime.now(), valor);
+              });
             },
           ),
           const SizedBox(height: 12),
@@ -116,9 +121,15 @@ class _PrestamoFormState extends State<PrestamoForm> {
                 firstDate: DateTime(2020),
                 lastDate: DateTime(2100),
               );
-              if (elegida != null) setState(() => _fecha = elegida);
+              if (elegida != null) {
+                setState(() {
+                  _fecha = elegida;
+                  _fechaManual = true;
+                });
+              }
             },
           ),
+          const Text('El préstamo sale hoy. Diario se cobra mañana, semanal a los 8 días, quincenal a los 15 y mensual al mes siguiente.'),
           TextField(controller: _nota, decoration: const InputDecoration(labelText: 'Nota')),
           const SizedBox(height: 12),
           Text(_plan),

@@ -18,6 +18,10 @@ class PrestamoFlujoTest extends TestCase
         parent::setUp();
 
         $this->actingAs(User::factory()->create());
+        $this->post('/cuadre/abrir', [
+            'valor_inicial' => 1000000,
+            'nombre' => 'Ruta',
+        ])->assertRedirect();
     }
 
     public function test_crea_el_plan_cobra_y_marca_atraso(): void

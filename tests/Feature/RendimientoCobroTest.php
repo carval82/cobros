@@ -20,6 +20,7 @@ class RendimientoCobroTest extends TestCase
         ]);
 
         $this->actingAs($cobrador);
+        $this->post('/cuadre/abrir', ['valor_inicial' => 500000])->assertRedirect();
         $this->postJson('/clientes', [
             'nombre' => 'Ana',
             'telefono' => '3001112233',

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CajaCobro;
 use App\Models\Cliente;
 use App\Models\Cuota;
 use App\Models\Pago;
@@ -10,9 +11,11 @@ use App\Services\PlanPagos;
 use App\Services\PrestamoService;
 use App\Support\AvisoWhatsapp;
 use App\Support\EmpresaActual;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class PrestamoController extends Controller
@@ -34,6 +37,7 @@ class PrestamoController extends Controller
         return view('prestamos.create', [
             'clientes' => Cliente::query()->orderBy('nombre')->get(),
             'clienteId' => $clienteId,
+            'cobros' => CajaCobro::conDiaAbierto($request->user()),
             'frecuencias' => PlanPagos::FRECUENCIAS,
             'demo' => $empresa && ! $empresa->esCompleta(),
             'usados' => $empresa && ! $empresa->esCompleta() ? Prestamo::query()->count() : 0,
@@ -60,14 +64,22 @@ class PrestamoController extends Controller
             'fecha_primer_pago.required' => 'Indica la fecha del primer pago.',
         ]);
 
+        $caja = $this->cobroDelPrestamo($request);
+        $diaPrestamo = now()->startOfDay();
+        $pedida = Carbon::parse($datos['fecha_primer_pago'])->startOfDay();
+        $fechaPrimerPago = $pedida->lte($diaPrestamo)
+            ? PlanPagos::primeraFecha($diaPrestamo, $datos['frecuencia'])->toDateString()
+            : $pedida->toDateString();
+
         $prestamo = $this->prestamos->crear(
             (int) $datos['cliente_id'],
             (int) $datos['capital'],
             (float) $datos['porcentaje'],
             (int) $datos['cuotas'],
             $datos['frecuencia'],
-            $datos['fecha_primer_pago'],
-            $datos['nota'] ?? null
+            $fechaPrimerPago,
+            $datos['nota'] ?? null,
+            $caja->id
         );
 
         if ($request->expectsJson()) {
@@ -79,7 +91,29 @@ class PrestamoController extends Controller
 
         return redirect()
             ->to(cobro_route('prestamos.show', $prestamo))
-            ->with('ok', 'Préstamo creado. El plan de pagos ya tiene fechas y cuotas.');
+            ->with('ok', 'Préstamo creado en el cobro. El plan de pagos ya tiene fechas y cuotas.');
+    }
+
+    private function cobroDelPrestamo(Request $request): CajaCobro
+    {
+        $usuario = $request->user();
+        $id = (int) $request->input('caja_cobro_id');
+        $caja = $id
+            ? CajaCobro::query()->find($id)
+            : CajaCobro::query()
+                ->where('user_id', $usuario->id)
+                ->where('abierto', true)
+                ->whereHas('jornadas', fn ($q) => $q->whereDate('fecha', today())->where('cerrada', false))
+                ->first();
+
+        $puede = $caja && (CajaCobro::veTodos($usuario) || (int) $caja->user_id === (int) $usuario->id);
+        if (! $puede || ! $caja->diaAbierto()) {
+            throw ValidationException::withMessages([
+                'caja_cobro_id' => 'Abre el cobro del día con el valor inicial antes de prestar. Un préstamo pertenece a un solo cobro.',
+            ]);
+        }
+
+        return $caja;
     }
 
     public function show(Prestamo $prestamo): View

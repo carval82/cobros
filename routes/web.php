@@ -3,6 +3,7 @@
 use App\Http\Controllers\AppMovilController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\CuadreController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\LicenciaAdminController;
@@ -16,6 +17,13 @@ use Illuminate\Support\Facades\Route;
 
 $cartera = function () {
     Route::get('/hoy/datos', [DashboardController::class, 'datos'])->name('hoy.datos');
+    Route::get('/cuadre', [CuadreController::class, 'index'])->name('cuadre');
+    Route::get('/cuadre/datos', [CuadreController::class, 'datos'])->name('cuadre.datos');
+    Route::post('/cuadre/abrir', [CuadreController::class, 'abrir'])->middleware('puede:cobros.registrar')->name('cuadre.abrir');
+    Route::post('/cuadre/dia', [CuadreController::class, 'dia'])->middleware('puede:cobros.registrar')->name('cuadre.dia');
+    Route::post('/cuadre/cerrar', [CuadreController::class, 'cerrar'])->middleware('puede:cobros.registrar')->name('cuadre.cerrar');
+    Route::post('/cuadre/refuerzo', [CuadreController::class, 'refuerzo'])->middleware('puede:cobros.registrar')->name('cuadre.refuerzo');
+    Route::post('/cuadre/gastos', [CuadreController::class, 'gasto'])->middleware('puede:cobros.registrar')->name('cuadre.gasto');
     Route::get('/atrasados', [DashboardController::class, 'atrasados'])->name('atrasados');
     Route::get('/ruta', [RutaController::class, 'index'])->name('ruta');
     Route::get('/ruta/datos', [RutaController::class, 'datos'])->name('ruta.datos');

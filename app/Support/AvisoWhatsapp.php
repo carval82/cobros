@@ -31,6 +31,30 @@ class AvisoWhatsapp
         return 'https://wa.me/'.$numero.'?text='.rawurlencode($texto);
     }
 
+    public static function enlaceSaldo(Cliente $cliente, int $saldo, ?string $proximaFecha, ?int $proximaValor, string $empresa): ?string
+    {
+        $numero = self::numero($cliente->telefono);
+        if ($numero === null) {
+            return null;
+        }
+
+        $texto = 'Hola '.$cliente->nombre.', tu saldo pendiente es '.Dinero::formato($saldo).'.';
+
+        if ($proximaFecha) {
+            $texto .= ' Próxima cuota: '.$proximaFecha;
+            if ($proximaValor) {
+                $texto .= ' por '.Dinero::formato($proximaValor);
+            }
+            $texto .= '.';
+        } elseif ($saldo <= 0) {
+            $texto .= ' El préstamo quedó saldado.';
+        }
+
+        $texto .= ' '.$empresa.'.';
+
+        return 'https://wa.me/'.$numero.'?text='.rawurlencode($texto);
+    }
+
     public static function numero(?string $telefono): ?string
     {
         $digitos = preg_replace('/\D+/', '', (string) $telefono) ?? '';

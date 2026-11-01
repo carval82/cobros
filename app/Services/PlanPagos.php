@@ -88,6 +88,19 @@ class PlanPagos
         ];
     }
 
+    public static function primeraFecha(Carbon $fechaPrestamo, string $frecuencia): Carbon
+    {
+        $base = $fechaPrestamo->copy()->startOfDay();
+
+        return match ($frecuencia) {
+            'diario' => $base->addDay(),
+            'semanal' => $base->addDays(8),
+            'quincenal' => $base->addDays(15),
+            'mensual' => $base->addMonthNoOverflow(),
+            default => throw new InvalidArgumentException('La frecuencia no es válida.'),
+        };
+    }
+
     public static function avanzar(Carbon $fecha, string $frecuencia): Carbon
     {
         return match ($frecuencia) {

@@ -6,17 +6,35 @@
     <header class="encabezado">
         <div>
             <h1>Nuevo préstamo</h1>
-            <p class="ayuda">Siempre sale de un cliente. Ese cliente puede tener varios préstamos, y cada abono queda en uno solo. El porcentaje es el interés de todo el préstamo: 100.000 al 20% en 5 semanas quedan en 120.000.</p>
+            <p class="ayuda">El préstamo sale de un cobro abierto y de un solo cliente. Ese cliente puede tener varios préstamos, incluso en cobros distintos. Cada abono queda en un solo préstamo. El porcentaje es el interés de todo el préstamo: 100.000 al 20% en 5 semanas quedan en 120.000.</p>
             @if (! empty($demo))
                 <p class="ayuda">Versión demo: {{ $usados }} de {{ \App\Models\Empresa::LIMITE_DEMO }} préstamos. La completa se activa en Acerca de.</p>
             @endif
         </div>
     </header>
 
+    @if ($cobros->isEmpty())
+        <section class="panel">
+            <h2>Abre el cobro</h2>
+            <p>Un préstamo sale de un cobro que ya tenga el día abierto con su valor inicial.</p>
+            <a class="btn" href="{{ cobro_route('cuadre') }}">Aperturar cobro</a>
+        </section>
+    @else
     <div class="dos">
         <section class="panel">
             <form method="post" action="{{ cobro_route('prestamos.store') }}" id="form-prestamo">
                 @csrf
+                @if ($cobros->count() === 1)
+                    <input type="hidden" name="caja_cobro_id" value="{{ $cobros->first()->id }}">
+                @else
+                    <label>Cobro
+                        <select name="caja_cobro_id" required>
+                            @foreach ($cobros as $cobro)
+                                <option value="{{ $cobro->id }}" @selected((string) old('caja_cobro_id') === (string) $cobro->id)>{{ $cobro->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                @endif
                 <label>Cliente
                     <select name="cliente_id" required>
                         <option value="" @selected(! old('cliente_id', $clienteId))>Elegir cliente</option>
@@ -48,9 +66,9 @@
                     </label>
                 </div>
                 <label>Fecha del primer pago
-                    <input id="fecha_primer_pago" name="fecha_primer_pago" type="date" value="{{ old('fecha_primer_pago', now()->toDateString()) }}" required>
+                    <input id="fecha_primer_pago" name="fecha_primer_pago" type="date" value="{{ old('fecha_primer_pago', \App\Services\PlanPagos::primeraFecha(now(), old('frecuencia', 'semanal'))->toDateString()) }}" required>
                 </label>
-                <p class="ayuda">Quincenal cuenta cada 15 días desde esa fecha. Mensual cae el mismo día, o el último del mes si no existe.</p>
+                <p class="ayuda">El préstamo sale hoy. Diario se cobra mañana, semanal a los 8 días, quincenal a los 15 y mensual al mes siguiente. Las cuotas siguientes conservan ese ritmo. Quincenal sigue cada 15 días y mensual cae el mismo día, o el último del mes si no existe.</p>
                 <label>Nota
                     <textarea name="nota">{{ old('nota') }}</textarea>
                 </label>
@@ -62,8 +80,11 @@
             <div id="preview"></div>
         </section>
     </div>
+    @endif
 @endsection
 
+@if ($cobros->isNotEmpty())
 @push('scripts')
     <script src="{{ asset('js/simular.js') }}"></script>
 @endpush
+@endif

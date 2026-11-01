@@ -27,6 +27,7 @@ class Prestamo extends Model
         'estado',
         'detenido_en',
         'motivo_detencion',
+        'caja_cobro_id',
     ];
 
     protected function casts(): array

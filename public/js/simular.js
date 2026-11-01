@@ -12,6 +12,29 @@ function iso(fecha) {
     return fecha.getFullYear() + '-' + dos(fecha.getMonth() + 1) + '-' + dos(fecha.getDate());
 }
 
+function primeraDesdeHoy(frecuencia) {
+    const hoy = new Date();
+    hoy.setHours(12, 0, 0, 0);
+    if (frecuencia === 'diario') {
+        hoy.setDate(hoy.getDate() + 1);
+        return hoy;
+    }
+    if (frecuencia === 'semanal') {
+        hoy.setDate(hoy.getDate() + 8);
+        return hoy;
+    }
+    if (frecuencia === 'quincenal') {
+        hoy.setDate(hoy.getDate() + 15);
+        return hoy;
+    }
+    const dia = hoy.getDate();
+    hoy.setDate(1);
+    hoy.setMonth(hoy.getMonth() + 1);
+    const ultimo = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
+    hoy.setDate(Math.min(dia, ultimo));
+    return hoy;
+}
+
 function avanzar(fecha, frecuencia) {
     const copia = new Date(fecha.getTime());
     if (frecuencia === 'diario') {
@@ -87,7 +110,20 @@ function simular() {
         + '</tbody></table></div>';
 }
 
+let fechaManual = false;
+const fechaInput = document.getElementById('fecha_primer_pago');
+const frecuenciaInput = document.getElementById('frecuencia');
+
 ['capital', 'porcentaje', 'cuotas', 'frecuencia', 'fecha_primer_pago'].forEach((id) => {
     document.getElementById(id).addEventListener('input', simular);
+});
+frecuenciaInput.addEventListener('change', () => {
+    if (!fechaManual) {
+        fechaInput.value = iso(primeraDesdeHoy(frecuenciaInput.value));
+    }
+    simular();
+});
+fechaInput.addEventListener('change', () => {
+    fechaManual = true;
 });
 simular();

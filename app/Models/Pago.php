@@ -24,6 +24,7 @@ class Pago extends Model
         'user_id',
         'porcentaje',
         'comision',
+        'caja_cobro_id',
     ];
 
     protected function casts(): array

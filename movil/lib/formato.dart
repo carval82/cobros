@@ -62,6 +62,48 @@ String enlaceAbonoWhatsapp({
   return 'https://wa.me/$numero?text=${Uri.encodeComponent(texto)}';
 }
 
+String enlaceSaldoWhatsapp({
+  required String telefono,
+  required String nombre,
+  required int saldo,
+  String? proximaFecha,
+  int? proximaValor,
+}) {
+  final numero = numeroWhatsapp(telefono);
+  if (numero == null) return '';
+
+  var texto = 'Hola $nombre, tu saldo pendiente es ${pesos(saldo)}.';
+  final fecha = _fechaCorta(proximaFecha);
+  if (fecha != null) {
+    texto += ' Próxima cuota: $fecha';
+    if (proximaValor != null && proximaValor > 0) texto += ' por ${pesos(proximaValor)}';
+    texto += '.';
+  } else if (saldo <= 0) {
+    texto += ' El préstamo quedó saldado.';
+  }
+
+  return 'https://wa.me/$numero?text=${Uri.encodeComponent(texto)}';
+}
+
+DateTime primeraCuota(DateTime prestamo, String frecuencia) {
+  final base = DateTime(prestamo.year, prestamo.month, prestamo.day);
+  switch (frecuencia) {
+    case 'diario':
+      return base.add(const Duration(days: 1));
+    case 'semanal':
+      return base.add(const Duration(days: 8));
+    case 'quincenal':
+      return base.add(const Duration(days: 15));
+    case 'mensual':
+      final destino = DateTime(base.year, base.month + 1, 1);
+      final ultimo = DateTime(destino.year, destino.month + 1, 0).day;
+      final dia = base.day > ultimo ? ultimo : base.day;
+      return DateTime(destino.year, destino.month, dia);
+    default:
+      return base.add(const Duration(days: 1));
+  }
+}
+
 String? _fechaCorta(String? fecha) {
   if (fecha == null || fecha.isEmpty) return null;
   final partes = fecha.split('-');

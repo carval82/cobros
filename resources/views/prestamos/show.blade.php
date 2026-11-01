@@ -6,6 +6,14 @@
     @php
         $estado = $prestamo->estaEnMora() ? 'mora' : $prestamo->estado;
         $cuotasAbiertas = $prestamo->cuotas->where('saldo', '>', 0);
+        $proxima = $cuotasAbiertas->sortBy('numero')->first();
+        $whatsappSaldo = \App\Support\AvisoWhatsapp::enlaceSaldo(
+            $prestamo->cliente,
+            $prestamo->saldo(),
+            $proxima?->fecha_vencimiento?->format('d/m/Y'),
+            $proxima ? (int) $proxima->saldo : null,
+            \App\Support\EmpresaActual::empresa()?->nombre ?? 'Cobras'
+        );
     @endphp
 
     <header class="encabezado">
@@ -17,7 +25,12 @@
                 @include('partials.estado', ['estado' => $estado])
             </p>
         </div>
-        <a class="btn-linea" href="{{ cobro_route('clientes.show', $prestamo->cliente) }}">Ver historial del cliente</a>
+        <div class="acciones">
+            @if ($whatsappSaldo)
+                <a class="btn" href="{{ $whatsappSaldo }}" target="_blank" rel="noopener">Enviar saldo por WhatsApp</a>
+            @endif
+            <a class="btn-linea" href="{{ cobro_route('clientes.show', $prestamo->cliente) }}">Ver historial del cliente</a>
+        </div>
     </header>
 
     @if ($prestamo->estado === 'detenido')
@@ -93,6 +106,9 @@
                         <button class="btn" type="submit">Guardar abono</button>
                     </form>
                     <p class="ayuda">Este cobro es solo de {{ $prestamo->cliente->nombre }}. Si cubre varias cuotas, se aplica de la más antigua a la más nueva.</p>
+                    @unless ($whatsappSaldo)
+                        <p class="ayuda">Agrega un teléfono al cliente para enviarle el saldo por WhatsApp.</p>
+                    @endunless
                 </section>
             @endif
 

@@ -16,6 +16,10 @@
     </header>
 
     <section class="grid-cifras">
+        <a class="cifra" href="{{ cobro_route('cuadre') }}">
+            <span>En caja</span>
+            <strong>@dinero($enCaja)</strong>
+        </a>
         <article class="cifra">
             <span>Cartera en la calle</span>
             <strong>@dinero($cartera)</strong>
