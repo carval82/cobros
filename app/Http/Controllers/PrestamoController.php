@@ -10,6 +10,7 @@ use App\Models\Prestamo;
 use App\Services\PlanPagos;
 use App\Services\PrestamoService;
 use App\Support\AvisoWhatsapp;
+use App\Support\CobroActivo;
 use App\Support\EmpresaActual;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -37,7 +38,7 @@ class PrestamoController extends Controller
         return view('prestamos.create', [
             'clientes' => Cliente::query()->orderBy('nombre')->get(),
             'clienteId' => $clienteId,
-            'cobros' => CajaCobro::conDiaAbierto($request->user()),
+            'cobros' => $this->cobrosDelFormulario($request),
             'frecuencias' => PlanPagos::FRECUENCIAS,
             'demo' => $empresa && ! $empresa->esCompleta(),
             'usados' => $empresa && ! $empresa->esCompleta() ? Prestamo::query()->count() : 0,
@@ -92,6 +93,17 @@ class PrestamoController extends Controller
         return redirect()
             ->to(cobro_route('prestamos.show', $prestamo))
             ->with('ok', 'Préstamo creado en el cobro. El plan de pagos ya tiene fechas y cuotas.');
+    }
+
+    private function cobrosDelFormulario(Request $request)
+    {
+        $cobros = CajaCobro::conDiaAbierto($request->user());
+        $activo = CobroActivo::caja();
+        if (! $activo) {
+            return $cobros;
+        }
+
+        return $cobros->where('id', $activo->id)->values();
     }
 
     private function cobroDelPrestamo(Request $request): CajaCobro

@@ -19,13 +19,17 @@
                     <a href="{{ route('licencias.index') }}" @class(['active' => request()->routeIs('licencias.*')])>Licencias</a>
                 @endif
                 @if (! auth()->user()->es_maestro || session('empresa_id') || app()->bound('empresa.tenant'))
+                    @php $cobroMenu = \App\Support\CobroActivo::caja(); @endphp
                     <a href="{{ cobro_route('dashboard') }}" @class(['active' => request()->routeIs('dashboard', 'tenant.dashboard')])>Hoy</a>
-                    <a href="{{ cobro_route('cuadre') }}" @class(['active' => request()->routeIs('cuadre', 'cuadre.datos', 'tenant.cuadre', 'tenant.cuadre.datos')])>Cuadre</a>
-                    <a href="{{ cobro_route('ruta') }}" @class(['active' => request()->routeIs('ruta', 'tenant.ruta')])>Ruta</a>
-                    <a href="{{ cobro_route('atrasados') }}" @class(['active' => request()->routeIs('atrasados', 'tenant.atrasados')])>Atrasados</a>
-                    <a href="{{ cobro_route('clientes.index') }}" @class(['active' => request()->routeIs('clientes.*', 'tenant.clientes.*')])>Clientes</a>
-                    @if (auth()->user()->puede('prestamos.crear'))
-                        <a href="{{ cobro_route('prestamos.create') }}" @class(['active' => request()->routeIs('prestamos.create', 'tenant.prestamos.create')])>Nuevo préstamo</a>
+                    @if ($cobroMenu)
+                        <p class="cobro-menu">{{ $cobroMenu->nombre }}</p>
+                        <a href="{{ cobro_route('cuadre') }}" @class(['active' => request()->routeIs('cuadre', 'cuadre.datos', 'tenant.cuadre', 'tenant.cuadre.datos')])>Cuadre</a>
+                        <a href="{{ cobro_route('ruta') }}" @class(['active' => request()->routeIs('ruta', 'tenant.ruta')])>Ruta</a>
+                        <a href="{{ cobro_route('atrasados') }}" @class(['active' => request()->routeIs('atrasados', 'tenant.atrasados')])>Atrasados</a>
+                        <a href="{{ cobro_route('clientes.index') }}" @class(['active' => request()->routeIs('clientes.*', 'tenant.clientes.*')])>Clientes</a>
+                        @if (auth()->user()->puede('prestamos.crear'))
+                            <a href="{{ cobro_route('prestamos.create') }}" @class(['active' => request()->routeIs('prestamos.create', 'tenant.prestamos.create')])>Nuevo préstamo</a>
+                        @endif
                     @endif
                     @if (auth()->user()->puede('usuarios.gestionar'))
                         <a href="{{ cobro_route('usuarios.index') }}" @class(['active' => request()->routeIs('usuarios.*', 'tenant.usuarios.*')])>Usuarios</a>

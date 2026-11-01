@@ -22,6 +22,7 @@ class PrestamoFlujoTest extends TestCase
             'valor_inicial' => 1000000,
             'nombre' => 'Ruta',
         ])->assertRedirect();
+        $this->get('/cobro/'.\App\Models\CajaCobro::query()->value('id').'/entrar')->assertRedirect();
     }
 
     public function test_crea_el_plan_cobra_y_marca_atraso(): void

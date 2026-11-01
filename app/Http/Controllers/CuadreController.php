@@ -7,6 +7,7 @@ use App\Models\Gasto;
 use App\Models\Jornada;
 use App\Models\User;
 use App\Services\CuadreCobro;
+use App\Support\CobroActivo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,7 +20,7 @@ class CuadreController extends Controller
     {
         $fecha = $this->fecha($request);
         $informes = $this->informes($request);
-        $id = (int) $request->query('caja');
+        $id = (int) ($request->query('caja') ?: CobroActivo::id());
         $informe = $id > 0 ? $informes->firstWhere('id', $id) : null;
 
         return view('cuadre', [
@@ -266,7 +267,9 @@ class CuadreController extends Controller
     private function volver(Request $request, CajaCobro $caja, string $texto): RedirectResponse
     {
         if ($request->input('seguir') === 'hoy') {
-            return redirect()->to(cobro_route('dashboard', ['cobro' => $caja->id]))->with('ok', $texto);
+            CobroActivo::entrar($caja);
+
+            return redirect()->to(cobro_route('dashboard'))->with('ok', $texto);
         }
 
         return back()->with('ok', $texto);

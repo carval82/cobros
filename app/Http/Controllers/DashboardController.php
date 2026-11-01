@@ -10,7 +10,9 @@ use App\Models\Prestamo;
 use App\Models\User;
 use App\Services\CuadreCobro;
 use App\Services\PrestamoService;
+use App\Support\CobroActivo;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -23,9 +25,9 @@ class DashboardController extends Controller
 
         $usuario = auth()->user();
         $cobros = $this->cobros();
-        $id = (int) request()->query('cobro');
-        $informe = $id > 0 ? $cobros->firstWhere('id', $id) : null;
-        $cajaId = $informe['id'] ?? ($cobros->count() === 1 ? $cobros->first()['id'] : null);
+        $caja = CobroActivo::caja();
+        $cajaId = $caja?->id;
+        $informe = $cajaId ? $cobros->firstWhere('id', $cajaId) : null;
         $escritorio = $this->escritorio($cajaId);
         $activo = $informe ?? ($cajaId ? $cobros->firstWhere('id', $cajaId) : null);
 
@@ -50,6 +52,22 @@ class DashboardController extends Controller
             'detenidos' => $escritorio['detenidos'],
             'movimientos' => $escritorio['movimientos'],
         ]);
+    }
+
+    public function entrar(CajaCobro $caja): RedirectResponse
+    {
+        $usuario = auth()->user();
+        abort_unless($usuario instanceof User && (CajaCobro::veTodos($usuario) || $caja->participa($usuario)), 403);
+        CobroActivo::entrar($caja);
+
+        return redirect()->to(cobro_route('dashboard'));
+    }
+
+    public function salir(): RedirectResponse
+    {
+        CobroActivo::salir();
+
+        return redirect()->to(cobro_route('dashboard'));
     }
 
     public function datos(): JsonResponse
@@ -118,7 +136,8 @@ class DashboardController extends Controller
     {
         $this->prestamos->sincronizarCartera();
 
-        $atrasadas = $this->cuotasAbiertas(null, $this->cajaIdsVisibles())
+        $activo = CobroActivo::id();
+        $atrasadas = $this->cuotasAbiertas($activo, $activo ? null : $this->cajaIdsVisibles())
             ->whereDate('fecha_vencimiento', '<', today())
             ->orderBy('fecha_vencimiento')
             ->get();

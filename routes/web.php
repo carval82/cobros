@@ -17,7 +17,9 @@ use Illuminate\Support\Facades\Route;
 
 $cartera = function () {
     Route::get('/hoy/datos', [DashboardController::class, 'datos'])->name('hoy.datos');
-    Route::get('/cuadre', [CuadreController::class, 'index'])->name('cuadre');
+    Route::get('/cobro/salir', [DashboardController::class, 'salir'])->name('cobro.salir');
+    Route::get('/cobro/{caja}/entrar', [DashboardController::class, 'entrar'])->whereNumber('caja')->name('cobro.entrar');
+    Route::get('/cuadre', [CuadreController::class, 'index'])->middleware('cobro')->name('cuadre');
     Route::get('/cuadre/datos', [CuadreController::class, 'datos'])->name('cuadre.datos');
     Route::post('/cuadre/abrir', [CuadreController::class, 'abrir'])->middleware('puede:cobros.registrar')->name('cuadre.abrir');
     Route::post('/cuadre/dia', [CuadreController::class, 'dia'])->middleware('puede:cobros.registrar')->name('cuadre.dia');
@@ -25,8 +27,8 @@ $cartera = function () {
     Route::post('/cuadre/refuerzo', [CuadreController::class, 'refuerzo'])->middleware('puede:cobros.registrar')->name('cuadre.refuerzo');
     Route::post('/cuadre/gastos', [CuadreController::class, 'gasto'])->middleware('puede:cobros.registrar')->name('cuadre.gasto');
     Route::post('/cuadre/equipo', [CuadreController::class, 'equipo'])->middleware('puede:cobros.registrar')->name('cuadre.equipo');
-    Route::get('/atrasados', [DashboardController::class, 'atrasados'])->name('atrasados');
-    Route::get('/ruta', [RutaController::class, 'index'])->name('ruta');
+    Route::get('/atrasados', [DashboardController::class, 'atrasados'])->middleware('cobro')->name('atrasados');
+    Route::get('/ruta', [RutaController::class, 'index'])->middleware('cobro')->name('ruta');
     Route::get('/ruta/datos', [RutaController::class, 'datos'])->name('ruta.datos');
 
     Route::get('/clientes/datos', [ClienteController::class, 'datos'])->name('clientes.datos');
@@ -39,7 +41,7 @@ $cartera = function () {
     Route::get('/clientes/{cliente}/editar', [ClienteController::class, 'edit'])->name('clientes.edit');
     Route::put('/clientes/{cliente}', [ClienteController::class, 'update'])->middleware('puede:clientes.escribir')->name('clientes.update');
 
-    Route::get('/prestamos/crear', [PrestamoController::class, 'create'])->name('prestamos.create');
+    Route::get('/prestamos/crear', [PrestamoController::class, 'create'])->middleware('cobro')->name('prestamos.create');
     Route::post('/prestamos', [PrestamoController::class, 'store'])->middleware('puede:prestamos.crear')->name('prestamos.store');
     Route::get('/prestamos/{prestamo}/datos', [PrestamoController::class, 'datos'])->name('prestamos.datos');
     Route::get('/prestamos/{prestamo}', [PrestamoController::class, 'show'])->name('prestamos.show');

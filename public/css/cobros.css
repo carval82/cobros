@@ -107,6 +107,16 @@ a { color: inherit; }
 
 .side nav { display: grid; gap: 4px; flex: 1; align-content: start; }
 
+.cobro-menu {
+    margin: 4px 6px 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(228, 193, 106, 0.18);
+    color: #e4c16a;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
 .side nav a {
     text-decoration: none;
     padding: 11px 12px;

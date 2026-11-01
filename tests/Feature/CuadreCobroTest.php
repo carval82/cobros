@@ -85,15 +85,20 @@ class CuadreCobroTest extends TestCase
             ->assertOk()
             ->assertSee('Entrar')
             ->assertSee('Luis Cobra')
+            ->assertDontSee('30.900.000')
+            ->assertDontSee('Cuadre')
             ->assertDontSee('Retirar la ganancia');
 
+        $this->actingAs($admin)->get('/cobro/'.$cajaId.'/entrar')->assertRedirect();
+
         $this->actingAs($admin)
-            ->get('/?cobro='.$cajaId)
+            ->get('/')
             ->assertOk()
             ->assertSee('Cuotas de hoy')
             ->assertSee('Historial reciente')
             ->assertSee('30.900.000')
             ->assertSee('Ana')
+            ->assertSee('Cuadre')
             ->assertDontSee('Retirar la ganancia');
 
         $this->actingAs($admin)
@@ -101,7 +106,7 @@ class CuadreCobroTest extends TestCase
             ->assertOk()
             ->assertSee('Luis Cobra')
             ->assertSee('30.900.000')
-            ->assertDontSee('Retirar la ganancia');
+            ->assertSee('Retirar la ganancia');
 
         $this->actingAs($admin)
             ->get('/cuadre?caja='.$cajaId)
@@ -120,6 +125,7 @@ class CuadreCobroTest extends TestCase
         ])->assertForbidden();
 
         $consulta = User::factory()->create(['rol' => 'consulta', 'name' => 'Lector']);
+        $this->actingAs($consulta)->get('/cobro/'.$cajaId.'/entrar')->assertRedirect();
         $this->actingAs($consulta)->get('/cuadre')->assertOk()->assertSee('Luis Cobra');
         $this->actingAs($consulta)->post('/cuadre/gastos', [
             'caja_id' => $cajaId,
@@ -274,11 +280,14 @@ class CuadreCobroTest extends TestCase
 
         $cajaId = \App\Models\CajaCobro::query()->value('id');
 
-        $this->actingAs($luis)->get('/cuadre')
+        $this->actingAs($luis)->get('/')
             ->assertOk()
             ->assertSee('Norte')
-            ->assertSee('Con Luis Cobra y Maria Ruta');
-        $this->actingAs($ajeno)->get('/cuadre')->assertOk()->assertDontSee('Norte');
+            ->assertSee('Entrar')
+            ->assertDontSee('Con Luis Cobra y Maria Ruta');
+        $this->actingAs($luis)->get('/cobro/'.$cajaId.'/entrar')->assertRedirect();
+        $this->actingAs($luis)->get('/')->assertOk()->assertSee('Con Luis Cobra y Maria Ruta');
+        $this->actingAs($ajeno)->get('/')->assertOk()->assertDontSee('<p>Norte</p>', false);
 
         $this->actingAs($luis)->post('/clientes', [
             'nombre' => 'Ana',
@@ -309,7 +318,8 @@ class CuadreCobroTest extends TestCase
             'cobradores' => [$luis->id],
         ])->assertRedirect();
 
-        $this->actingAs($maria)->get('/cuadre')->assertOk()->assertDontSee('Norte');
+        $this->actingAs($maria)->get('/')->assertOk()->assertDontSee('<p>Norte</p>', false);
+        $this->actingAs($luis)->get('/cobro/'.$cajaId.'/entrar')->assertRedirect();
         $this->actingAs($luis)->get('/')->assertOk()->assertSee('Con Luis Cobra');
     }
 }

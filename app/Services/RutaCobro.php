@@ -7,6 +7,7 @@ use App\Models\Cliente;
 use App\Models\Cuota;
 use App\Models\Pago;
 use App\Models\User;
+use App\Support\CobroActivo;
 
 class RutaCobro
 {
@@ -21,9 +22,12 @@ class RutaCobro
     public function armar(?float $origenLat = null, ?float $origenLng = null): array
     {
         $usuario = auth()->user();
-        $limite = $usuario instanceof User && ! CajaCobro::veTodos($usuario)
-            ? CajaCobro::visiblesPara($usuario)->pluck('id')->all()
-            : null;
+        $activo = CobroActivo::id();
+        $limite = $activo
+            ? [$activo]
+            : ($usuario instanceof User && ! CajaCobro::veTodos($usuario)
+                ? CajaCobro::visiblesPara($usuario)->pluck('id')->all()
+                : null);
 
         $cuotas = Cuota::query()
             ->with(['prestamo.cliente'])

@@ -50,6 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'empresa' => \App\Http\Middleware\AsegurarEmpresa::class,
             'vigente' => \App\Http\Middleware\LicenciaVigente::class,
             'puede' => \App\Http\Middleware\ExigirPermiso::class,
+            'cobro' => \App\Http\Middleware\ExigirCobroActivo::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
