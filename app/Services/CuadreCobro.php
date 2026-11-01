@@ -114,9 +114,30 @@ class CuadreCobro
                 ])->values()->all(),
         ];
 
+        $informe['cobradores'] = $caja->fichaCobradores();
+        $informe['equipo'] = self::fraseEquipo($informe['cobradores']);
         $informe['linea'] = self::linea($informe);
 
         return $informe;
+    }
+
+    public static function fraseEquipo(array $cobradores): string
+    {
+        $nombres = array_values(array_filter(array_map(
+            fn ($fila) => is_array($fila) ? (string) ($fila['nombre'] ?? '') : '',
+            $cobradores
+        )));
+
+        if ($nombres === []) {
+            return 'Solo';
+        }
+        if (count($nombres) === 1) {
+            return 'Con '.$nombres[0];
+        }
+
+        $ultimo = array_pop($nombres);
+
+        return 'Con '.implode(', ', $nombres).' y '.$ultimo;
     }
 
     public static function linea(array $informe): string
@@ -131,6 +152,7 @@ class CuadreCobro
         };
 
         return $informe['nombre'].' · '.$tipo
+            .' · '.($informe['equipo'] ?? 'Solo')
             .' · Base '.Dinero::formato($informe['base'])
             .' · En caja '.Dinero::formato($informe['en_caja'])
             .' · Prestó '.Dinero::formato($informe['prestado_hoy'])

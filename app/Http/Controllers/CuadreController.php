@@ -28,6 +28,8 @@ class CuadreController extends Controller
             'puedeAperturar' => $this->puedeAperturar($request->user()),
             'informes' => $informes,
             'informe' => $informe,
+            'cobradoresEmpresa' => CajaCobro::cobradoresDeLaEmpresa(),
+            'equipoIds' => [],
         ]);
     }
 
@@ -48,6 +50,8 @@ class CuadreController extends Controller
             'nombre' => ['nullable', 'string', 'max:80'],
             'valor_inicial' => ['required', 'integer', 'min:1'],
             'caja_id' => ['nullable', 'integer'],
+            'cobradores' => ['nullable', 'array'],
+            'cobradores.*' => ['integer'],
         ], [
             'valor_inicial.required' => 'Escribe el valor inicial con el que sale el cobro.',
             'valor_inicial.min' => 'El valor inicial tiene que ser mayor que cero.',
@@ -86,12 +90,29 @@ class CuadreController extends Controller
             'fecha' => now()->toDateString(),
             'valor_inicial' => $valor,
         ]);
+        $caja->sincronizarCobradores($datos['cobradores'] ?? []);
 
         if ($request->expectsJson()) {
             return response()->json(['ok' => true, 'token' => csrf_token(), 'id' => $caja->id, 'base' => $valor]);
         }
 
         return $this->volver($request, $caja, 'Cobro aperturado. La base queda en ese valor inicial y el día ya puede repartir préstamos.');
+    }
+
+    public function equipo(Request $request): RedirectResponse|JsonResponse
+    {
+        $caja = $this->autorizada($request);
+        $datos = $request->validate([
+            'cobradores' => ['nullable', 'array'],
+            'cobradores.*' => ['integer'],
+        ]);
+        $caja->sincronizarCobradores($datos['cobradores'] ?? []);
+
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'token' => csrf_token()]);
+        }
+
+        return $this->volver($request, $caja, 'Este cobro queda con esos cobradores. Sin ellos, lo desarrolla el administrador.');
     }
 
     public function dia(Request $request): RedirectResponse|JsonResponse

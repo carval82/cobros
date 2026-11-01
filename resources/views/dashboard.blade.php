@@ -17,7 +17,7 @@
 
     <section class="panel">
         <h2>Cobros</h2>
-        <p class="ayuda">Cada cobro se entra desde aquí. Si es nuevo, se abre en esta vista y aquí mismo se desarrolla.</p>
+        <p class="ayuda">Cada cobro se entra desde aquí. El administrador puede ir solo o con uno o varios cobradores. Ellos desarrollan la ruta de ese mismo cobro.</p>
         @forelse ($cobros as $item)
             <div @class(['entrada-cobro', 'activa' => $informe && $informe['id'] === $item['id']])>
                 <p>{{ $item['linea'] }}</p>
@@ -39,6 +39,7 @@
                 @if ($informe)
                     <input type="hidden" name="caja_id" value="{{ $informe['id'] }}">
                 @endif
+                @include('partials.equipo-cobro')
                 <div class="fila-form">
                     <label>Nombre del cobro
                         <input name="nombre" value="{{ old('nombre', $informe['nombre'] ?? auth()->user()->name) }}" maxlength="80">
@@ -50,10 +51,21 @@
                 <button class="btn" type="submit">Abrir y desarrollar</button>
             </form>
         @endif
+
+        @if (! empty($editaEquipo) && $cajaActiva && $cobradoresEmpresa->isNotEmpty())
+            <form method="post" action="{{ cobro_route('cuadre.equipo') }}">
+                @csrf
+                <input type="hidden" name="seguir" value="hoy">
+                <input type="hidden" name="caja_id" value="{{ $cajaActiva }}">
+                @include('partials.equipo-cobro')
+                @if ($cobradoresEmpresa->isNotEmpty())
+                    <button class="btn" type="submit">Guardar cobradores</button>
+                @endif
+            </form>
+        @endif
     </section>
 
-    @include('partials.desarrollo-cobro', ['seguir' => 'hoy'])
-
+    @if ($mostrar)
     <section class="grid-cifras">
         <article class="cifra">
             <span>En caja</span>
@@ -115,4 +127,5 @@
             @endif
         </section>
     </div>
+    @endif
 @endsection

@@ -21,70 +21,75 @@ class DashboardController extends Controller
     {
         $this->prestamos->sincronizarCartera();
 
-        $hoy = $this->cuotasAbiertas()
-            ->whereDate('fecha_vencimiento', today())
-            ->orderBy('id')
-            ->get();
-
-        $atrasadas = $this->cuotasAbiertas()
-            ->whereDate('fecha_vencimiento', '<', today())
-            ->orderBy('fecha_vencimiento')
-            ->get();
-
-        $cartera = (int) Cuota::query()
-            ->where('saldo', '>', 0)
-            ->whereHas('prestamo', fn ($q) => $q->whereIn('estado', ['activo', 'detenido']))
-            ->sum('saldo');
-
         $usuario = auth()->user();
         $cobros = $this->cobros();
         $id = (int) request()->query('cobro');
         $informe = $id > 0 ? $cobros->firstWhere('id', $id) : null;
+        $cajaId = $informe['id'] ?? ($cobros->count() === 1 ? $cobros->first()['id'] : null);
+        $escritorio = $this->escritorio($cajaId);
+        $activo = $informe ?? ($cajaId ? $cobros->firstWhere('id', $cajaId) : null);
 
         return view('dashboard', [
-            'hoy' => $hoy,
-            'atrasadas' => $atrasadas,
-            'cartera' => $cartera,
-            'cobrarHoy' => (int) $hoy->sum('saldo'),
-            'mora' => (int) $atrasadas->sum('saldo'),
-            'cobradoHoy' => (int) Pago::query()->whereDate('fecha', today())->sum('monto'),
-            'enCaja' => (int) $cobros->sum('en_caja'),
+            'hoy' => $escritorio['hoy'],
+            'atrasadas' => $escritorio['atrasadas'],
+            'cartera' => $escritorio['cartera'],
+            'cobrarHoy' => $escritorio['cobrarHoy'],
+            'mora' => $escritorio['mora'],
+            'cobradoHoy' => $escritorio['cobradoHoy'],
+            'enCaja' => $cajaId ? (int) ($cobros->firstWhere('id', $cajaId)['en_caja'] ?? 0) : 0,
             'cobros' => $cobros,
             'informe' => $informe,
+            'mostrar' => $cajaId !== null,
+            'cajaActiva' => $cajaId,
+            'editaEquipo' => $activo && ! empty($activo['edita']),
+            'cobradoresEmpresa' => CajaCobro::cobradoresDeLaEmpresa(),
+            'equipoIds' => collect($activo['cobradores'] ?? [])->pluck('id')->map(fn ($id) => (int) $id)->all(),
             'fecha' => now()->toDateString(),
             'puedeAperturar' => $usuario instanceof User && $usuario->puede('cobros.registrar')
                 && ! CajaCobro::query()->where('user_id', $usuario->id)->where('abierto', true)->exists(),
-            'detenidos' => Prestamo::query()->where('estado', 'detenido')->count(),
-            'movimientos' => Movimiento::query()->with('cliente')->latest('id')->limit(8)->get(),
+            'detenidos' => $escritorio['detenidos'],
+            'movimientos' => $escritorio['movimientos'],
         ]);
     }
 
     public function datos(): JsonResponse
     {
         $this->prestamos->sincronizarCartera();
+        $ids = $this->cajaIdsVisibles();
 
-        $hoy = $this->cuotasAbiertas()
+        $hoy = $this->cuotasAbiertas(null, $ids)
             ->whereDate('fecha_vencimiento', today())
             ->orderBy('id')
             ->get();
 
-        $atrasadas = $this->cuotasAbiertas()
+        $atrasadas = $this->cuotasAbiertas(null, $ids)
             ->whereDate('fecha_vencimiento', '<', today())
             ->orderBy('fecha_vencimiento')
             ->get();
 
         $cartera = (int) Cuota::query()
             ->where('saldo', '>', 0)
-            ->whereHas('prestamo', fn ($q) => $q->whereIn('estado', ['activo', 'detenido']))
+            ->whereHas('prestamo', function ($q) use ($ids) {
+                $q->whereIn('estado', ['activo', 'detenido']);
+                if (is_array($ids)) {
+                    $q->whereIn('caja_cobro_id', $ids);
+                }
+            })
             ->sum('saldo');
 
         return response()->json([
             'token' => csrf_token(),
             'cobrar_hoy' => (int) $hoy->sum('saldo'),
             'mora' => (int) $atrasadas->sum('saldo'),
-            'cobrado_hoy' => (int) Pago::query()->whereDate('fecha', today())->sum('monto'),
+            'cobrado_hoy' => (int) Pago::query()
+                ->when(is_array($ids), fn ($q) => $q->whereIn('caja_cobro_id', $ids))
+                ->whereDate('fecha', today())
+                ->sum('monto'),
             'cartera' => $cartera,
-            'detenidos' => Prestamo::query()->where('estado', 'detenido')->count(),
+            'detenidos' => Prestamo::query()
+                ->when(is_array($ids), fn ($q) => $q->whereIn('caja_cobro_id', $ids))
+                ->where('estado', 'detenido')
+                ->count(),
             'hoy' => $hoy->map(fn (Cuota $cuota) => $this->cuotaFila($cuota))->values(),
             'atrasadas' => $atrasadas->map(fn (Cuota $cuota) => $this->cuotaFila($cuota))->values(),
         ]);
@@ -113,7 +118,7 @@ class DashboardController extends Controller
     {
         $this->prestamos->sincronizarCartera();
 
-        $atrasadas = $this->cuotasAbiertas()
+        $atrasadas = $this->cuotasAbiertas(null, $this->cajaIdsVisibles())
             ->whereDate('fecha_vencimiento', '<', today())
             ->orderBy('fecha_vencimiento')
             ->get();
@@ -122,6 +127,53 @@ class DashboardController extends Controller
             'atrasadas' => $atrasadas,
             'mora' => (int) $atrasadas->sum('saldo'),
         ]);
+    }
+
+    private function escritorio(?int $cajaId): array
+    {
+        if (! $cajaId) {
+            return [
+                'hoy' => collect(),
+                'atrasadas' => collect(),
+                'cartera' => 0,
+                'cobrarHoy' => 0,
+                'mora' => 0,
+                'cobradoHoy' => 0,
+                'detenidos' => 0,
+                'movimientos' => collect(),
+            ];
+        }
+
+        $hoy = $this->cuotasAbiertas($cajaId)
+            ->whereDate('fecha_vencimiento', today())
+            ->orderBy('id')
+            ->get();
+
+        $atrasadas = $this->cuotasAbiertas($cajaId)
+            ->whereDate('fecha_vencimiento', '<', today())
+            ->orderBy('fecha_vencimiento')
+            ->get();
+
+        $cartera = (int) Cuota::query()
+            ->where('saldo', '>', 0)
+            ->whereHas('prestamo', fn ($q) => $q->where('caja_cobro_id', $cajaId)->whereIn('estado', ['activo', 'detenido']))
+            ->sum('saldo');
+
+        return [
+            'hoy' => $hoy,
+            'atrasadas' => $atrasadas,
+            'cartera' => $cartera,
+            'cobrarHoy' => (int) $hoy->sum('saldo'),
+            'mora' => (int) $atrasadas->sum('saldo'),
+            'cobradoHoy' => (int) Pago::query()->where('caja_cobro_id', $cajaId)->whereDate('fecha', today())->sum('monto'),
+            'detenidos' => Prestamo::query()->where('caja_cobro_id', $cajaId)->where('estado', 'detenido')->count(),
+            'movimientos' => Movimiento::query()
+                ->with('cliente')
+                ->whereHas('prestamo', fn ($q) => $q->where('caja_cobro_id', $cajaId))
+                ->latest('id')
+                ->limit(8)
+                ->get(),
+        ];
     }
 
     private function cuotaFila(Cuota $cuota): array
@@ -145,11 +197,28 @@ class DashboardController extends Controller
         ];
     }
 
-    private function cuotasAbiertas()
+    private function cajaIdsVisibles(): ?array
+    {
+        $usuario = auth()->user();
+        if (! $usuario instanceof User || CajaCobro::veTodos($usuario)) {
+            return null;
+        }
+
+        return CajaCobro::visiblesPara($usuario)->pluck('id')->all();
+    }
+
+    private function cuotasAbiertas(?int $cajaId = null, ?array $cajaIds = null)
     {
         return Cuota::query()
             ->with(['prestamo.cliente'])
             ->where('saldo', '>', 0)
-            ->whereHas('prestamo', fn ($q) => $q->where('estado', 'activo'));
+            ->whereHas('prestamo', function ($q) use ($cajaId, $cajaIds) {
+                $q->where('estado', 'activo');
+                if ($cajaId) {
+                    $q->where('caja_cobro_id', $cajaId);
+                } elseif (is_array($cajaIds)) {
+                    $q->whereIn('caja_cobro_id', $cajaIds);
+                }
+            });
     }
 }

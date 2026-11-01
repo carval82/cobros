@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\CajaCobro;
 use App\Models\Cliente;
 use App\Models\Cuota;
 use App\Models\Pago;
+use App\Models\User;
 
 class RutaCobro
 {
@@ -18,11 +20,21 @@ class RutaCobro
      */
     public function armar(?float $origenLat = null, ?float $origenLng = null): array
     {
+        $usuario = auth()->user();
+        $limite = $usuario instanceof User && ! CajaCobro::veTodos($usuario)
+            ? CajaCobro::visiblesPara($usuario)->pluck('id')->all()
+            : null;
+
         $cuotas = Cuota::query()
             ->with(['prestamo.cliente'])
             ->where('saldo', '>', 0)
             ->whereDate('fecha_vencimiento', '<=', today())
-            ->whereHas('prestamo', fn ($q) => $q->where('estado', 'activo'))
+            ->whereHas('prestamo', function ($q) use ($limite) {
+                $q->where('estado', 'activo');
+                if (is_array($limite)) {
+                    $q->whereIn('caja_cobro_id', $limite);
+                }
+            })
             ->get();
 
         $paradas = [];

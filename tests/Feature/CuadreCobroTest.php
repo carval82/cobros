@@ -90,8 +90,11 @@ class CuadreCobroTest extends TestCase
         $this->actingAs($admin)
             ->get('/?cobro='.$cajaId)
             ->assertOk()
-            ->assertSee('Retirar la ganancia')
-            ->assertSee('30.900.000');
+            ->assertSee('Cuotas de hoy')
+            ->assertSee('Historial reciente')
+            ->assertSee('30.900.000')
+            ->assertSee('Ana')
+            ->assertDontSee('Retirar la ganancia');
 
         $this->actingAs($admin)
             ->get('/cuadre')
@@ -254,5 +257,59 @@ class CuadreCobroTest extends TestCase
             ->whereDate('fecha', now()->toDateString())
             ->value('valor_inicial'));
         Carbon::setTestNow();
+    }
+
+    public function test_el_administrador_lleva_el_cobro_solo_o_con_cobradores(): void
+    {
+        $admin = User::factory()->create(['rol' => 'administrador', 'name' => 'Ana Admin']);
+        $luis = User::factory()->create(['rol' => 'cobrador', 'name' => 'Luis Cobra']);
+        $maria = User::factory()->create(['rol' => 'cobrador', 'name' => 'Maria Ruta']);
+        $ajeno = User::factory()->create(['rol' => 'cobrador', 'name' => 'Ajeno']);
+
+        $this->actingAs($admin)->post('/cuadre/abrir', [
+            'valor_inicial' => 500000,
+            'nombre' => 'Norte',
+            'cobradores' => [$luis->id, $maria->id],
+        ])->assertRedirect();
+
+        $cajaId = \App\Models\CajaCobro::query()->value('id');
+
+        $this->actingAs($luis)->get('/cuadre')
+            ->assertOk()
+            ->assertSee('Norte')
+            ->assertSee('Con Luis Cobra y Maria Ruta');
+        $this->actingAs($ajeno)->get('/cuadre')->assertOk()->assertDontSee('Norte');
+
+        $this->actingAs($luis)->post('/clientes', [
+            'nombre' => 'Ana',
+            'telefono' => '3001112233',
+        ])->assertRedirect();
+        $clienteId = \App\Models\Cliente::query()->value('id');
+        $this->actingAs($luis)->post('/prestamos', [
+            'cliente_id' => $clienteId,
+            'capital' => 100000,
+            'porcentaje' => 20,
+            'cuotas' => 1,
+            'frecuencia' => 'diario',
+            'fecha_primer_pago' => now()->toDateString(),
+        ])->assertRedirect();
+        $this->assertSame($cajaId, (int) Prestamo::query()->value('caja_cobro_id'));
+
+        $this->actingAs($ajeno)->post('/prestamos', [
+            'cliente_id' => $clienteId,
+            'capital' => 10000,
+            'porcentaje' => 20,
+            'cuotas' => 1,
+            'frecuencia' => 'diario',
+            'fecha_primer_pago' => now()->toDateString(),
+        ])->assertSessionHasErrors('caja_cobro_id');
+
+        $this->actingAs($admin)->post('/cuadre/equipo', [
+            'caja_id' => $cajaId,
+            'cobradores' => [$luis->id],
+        ])->assertRedirect();
+
+        $this->actingAs($maria)->get('/cuadre')->assertOk()->assertDontSee('Norte');
+        $this->actingAs($luis)->get('/')->assertOk()->assertSee('Con Luis Cobra');
     }
 }

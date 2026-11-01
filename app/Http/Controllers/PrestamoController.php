@@ -101,12 +101,16 @@ class PrestamoController extends Controller
         $caja = $id
             ? CajaCobro::query()->find($id)
             : CajaCobro::query()
-                ->where('user_id', $usuario->id)
                 ->where('abierto', true)
+                ->where(function ($q) use ($usuario) {
+                    $q->where('user_id', $usuario->id)
+                        ->orWhereHas('integrantes', fn ($i) => $i->where('user_id', $usuario->id));
+                })
                 ->whereHas('jornadas', fn ($q) => $q->whereDate('fecha', today())->where('cerrada', false))
+                ->orderByRaw('case when user_id = ? then 0 else 1 end', [$usuario->id])
                 ->first();
 
-        $puede = $caja && (CajaCobro::veTodos($usuario) || (int) $caja->user_id === (int) $usuario->id);
+        $puede = $caja && (CajaCobro::veTodos($usuario) || $caja->participa($usuario));
         if (! $puede || ! $caja->diaAbierto()) {
             throw ValidationException::withMessages([
                 'caja_cobro_id' => 'Abre el cobro del día con el valor inicial antes de prestar. Un préstamo pertenece a un solo cobro.',

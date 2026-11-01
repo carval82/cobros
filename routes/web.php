@@ -24,6 +24,7 @@ $cartera = function () {
     Route::post('/cuadre/cerrar', [CuadreController::class, 'cerrar'])->middleware('puede:cobros.registrar')->name('cuadre.cerrar');
     Route::post('/cuadre/refuerzo', [CuadreController::class, 'refuerzo'])->middleware('puede:cobros.registrar')->name('cuadre.refuerzo');
     Route::post('/cuadre/gastos', [CuadreController::class, 'gasto'])->middleware('puede:cobros.registrar')->name('cuadre.gasto');
+    Route::post('/cuadre/equipo', [CuadreController::class, 'equipo'])->middleware('puede:cobros.registrar')->name('cuadre.equipo');
     Route::get('/atrasados', [DashboardController::class, 'atrasados'])->name('atrasados');
     Route::get('/ruta', [RutaController::class, 'index'])->name('ruta');
     Route::get('/ruta/datos', [RutaController::class, 'datos'])->name('ruta.datos');

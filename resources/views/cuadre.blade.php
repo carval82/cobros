@@ -18,7 +18,7 @@
 
     <p class="ayuda">El valor inicial es la base de ese cobro. De ahí salen sus préstamos y a ella vuelve su recaudo. Al cerrar, retiras la ganancia o la sumas a su base. Otro cobro no entra en esa cuenta.</p>
     @if ($coordina && ! $informe)
-        <p class="ayuda">El administrador ve la línea de cada cobrador y entra a una para desarrollarla. El suyo también es un cobro aparte.</p>
+        <p class="ayuda">El administrador entra a cada cobro. Puede desarrollarlo solo o con uno o varios cobradores en la misma ruta.</p>
     @endif
 
     @if (! $informe)
@@ -34,6 +34,7 @@
                     <label>Valor inicial
                         <input name="valor_inicial" type="number" min="1" step="1" value="{{ old('valor_inicial') }}" required>
                     </label>
+                    @include('partials.equipo-cobro')
                     <button class="btn" type="submit">Abrir cobro</button>
                 </form>
             </section>
@@ -68,6 +69,7 @@
                     <label>Valor inicial
                         <input name="valor_inicial" type="number" min="1" step="1" value="{{ old('valor_inicial') }}" required>
                     </label>
+                    @include('partials.equipo-cobro')
                     <button class="btn" type="submit">Abrir cobro</button>
                 </form>
             </section>
