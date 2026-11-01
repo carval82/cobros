@@ -16,7 +16,7 @@ class CuadreVista extends StatefulWidget {
 class _CuadreVistaState extends State<CuadreVista> {
   Map<String, dynamic>? _datos;
   String? _error;
-  int _indice = 0;
+  int? _elegida;
   bool _ocupado = false;
   final _valor = TextEditingController();
   final _gasto = TextEditingController();
@@ -46,7 +46,8 @@ class _CuadreVistaState extends State<CuadreVista> {
         _datos = datos;
         _error = null;
         final cajas = (datos['cajas'] as List?) ?? const [];
-        if (_indice >= cajas.length) _indice = 0;
+        final sigue = cajas.any((caja) => caja is Map && entero(caja['id']) == _elegida);
+        if (!sigue) _elegida = null;
       });
     } catch (e) {
       if (mounted) setState(() => _error = textoError(e));
@@ -100,43 +101,61 @@ class _CuadreVistaState extends State<CuadreVista> {
     }
   }
 
+  Map<String, dynamic>? _cajaElegida(List cajas) {
+    for (final caja in cajas) {
+      if (caja is Map && entero(caja['id']) == _elegida) {
+        return Map<String, dynamic>.from(caja);
+      }
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final datos = _datos;
     final cajas = (datos?['cajas'] as List?) ?? const [];
-    final caja = cajas.isEmpty ? null : cajas[_indice];
-    final mapa = caja is Map ? caja : null;
+    final mapa = _elegida == null ? null : _cajaElegida(cajas);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Cuadre del día')),
+      appBar: AppBar(
+        title: Text(_elegida == null ? 'Cuadre del día' : (mapa?['nombre']?.toString() ?? 'Cobro')),
+        leading: _elegida == null ? null : BackButton(onPressed: () => setState(() => _elegida = null)),
+      ),
       body: datos == null
           ? Center(child: _error == null ? const CircularProgressIndicator() : Padding(padding: const EdgeInsets.all(24), child: Text(_error!)))
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
               children: [
-                const Text('Un cobro se abre con un valor inicial. Esa cifra es la base. Al cerrar el día queda el efectivo del siguiente: retiras la ganancia o la sumas a la base.'),
-                const SizedBox(height: 8),
-                Text(datos['fecha']?.toString() ?? '', style: const TextStyle(color: muted)),
-                if (cajas.length > 1) ...[
+                if (mapa == null) ...[
+                  const Text('Cada cobro va en una línea. Entra a esa línea para prestar, cobrar y cerrar su día.'),
+                  const SizedBox(height: 8),
+                  Text(datos['fecha']?.toString() ?? '', style: const TextStyle(color: muted)),
                   const SizedBox(height: 12),
-                  DropdownButtonFormField<int>(
-                    value: _indice,
-                    decoration: const InputDecoration(labelText: 'Cobro'),
-                    items: [
-                      for (var i = 0; i < cajas.length; i++)
-                        if (cajas[i] is Map)
-                          DropdownMenuItem(
-                            value: i,
-                            child: Text('${(cajas[i] as Map)['nombre']} · ${(cajas[i] as Map)['tipo']}'),
-                          ),
-                    ],
-                    onChanged: (valor) {
-                      if (valor == null) return;
-                      setState(() => _indice = valor);
-                    },
-                  ),
-                ],
-                if (mapa == null || mapa['sin_apertura'] == true) ...[
+                  for (final caja in cajas)
+                    if (caja is Map)
+                      Lamina(
+                        child: InkWell(
+                          onTap: () => setState(() => _elegida = entero(caja['id'])),
+                          child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Text(caja['linea']?.toString() ?? caja['nombre']?.toString() ?? 'Cobro'),
+                        ),
+                        ),
+                      ),
+                  if (datos['puede_aperturar'] == true) ...[
+                    const Titulo('APERTURA'),
+                    TextField(
+                      controller: _valor,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Valor inicial'),
+                    ),
+                    const SizedBox(height: 8),
+                    FilledButton(
+                      onPressed: _ocupado ? null : () => _abrir(null),
+                      child: const Text('Abrir cobro'),
+                    ),
+                  ],
+                ] else if (mapa['sin_apertura'] == true) ...[
                   const Titulo('APERTURA'),
                   TextField(
                     controller: _valor,

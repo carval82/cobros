@@ -19,12 +19,13 @@ class CuadreController extends Controller
     {
         $fecha = $this->fecha($request);
         $informes = $this->informes($request);
-        $id = (int) $request->input('caja');
-        $informe = $informes->firstWhere('id', $id) ?? $informes->first();
+        $id = (int) $request->query('caja');
+        $informe = $id > 0 ? $informes->firstWhere('id', $id) : null;
 
         return view('cuadre', [
             'fecha' => $fecha,
             'coordina' => $this->coordina($request->user()),
+            'puedeAperturar' => $this->puedeAperturar($request->user()),
             'informes' => $informes,
             'informe' => $informe,
         ]);
@@ -36,6 +37,7 @@ class CuadreController extends Controller
             'token' => csrf_token(),
             'fecha' => $this->fecha($request),
             'coordina' => $this->coordina($request->user()),
+            'puede_aperturar' => $this->puedeAperturar($request->user()),
             'cajas' => $this->informes($request)->values(),
         ]);
     }
@@ -89,7 +91,7 @@ class CuadreController extends Controller
             return response()->json(['ok' => true, 'token' => csrf_token(), 'id' => $caja->id, 'base' => $valor]);
         }
 
-        return back()->with('ok', 'Cobro aperturado. La base queda en ese valor inicial y el día ya puede repartir préstamos.');
+        return $this->volver($request, $caja, 'Cobro aperturado. La base queda en ese valor inicial y el día ya puede repartir préstamos.');
     }
 
     public function dia(Request $request): RedirectResponse|JsonResponse
@@ -123,7 +125,7 @@ class CuadreController extends Controller
             return response()->json(['ok' => true, 'token' => csrf_token(), 'valor_inicial' => $efectivo]);
         }
 
-        return back()->with('ok', 'Día abierto. Sales con el valor que dejó el cierre anterior.');
+        return $this->volver($request, $caja, 'Día abierto. Sales con el valor que dejó el cierre anterior.');
     }
 
     public function cerrar(Request $request): RedirectResponse|JsonResponse
@@ -151,7 +153,7 @@ class CuadreController extends Controller
             ]);
         }
 
-        return back()->with('ok', $texto);
+        return $this->volver($request, $caja, $texto);
     }
 
     public function refuerzo(Request $request): RedirectResponse|JsonResponse
@@ -171,7 +173,7 @@ class CuadreController extends Controller
             return response()->json(['ok' => true, 'token' => csrf_token(), 'base' => (int) $caja->fresh()->capital]);
         }
 
-        return back()->with('ok', 'Ese dinero quedó sumado a la base y entra en el efectivo del día.');
+        return $this->volver($request, $caja, 'Ese dinero quedó sumado a la base y entra en el efectivo del día.');
     }
 
     public function gasto(Request $request): RedirectResponse|JsonResponse
@@ -198,7 +200,7 @@ class CuadreController extends Controller
             return response()->json(['ok' => true, 'token' => csrf_token()]);
         }
 
-        return back()->with('ok', 'Gasto registrado en el cobro.');
+        return $this->volver($request, $caja, 'Gasto registrado en el cobro.');
     }
 
     private function informes(Request $request)
@@ -238,6 +240,21 @@ class CuadreController extends Controller
     private function coordina(User $usuario): bool
     {
         return $usuario->es_maestro || $usuario->puede('usuarios.gestionar');
+    }
+
+    private function volver(Request $request, CajaCobro $caja, string $texto): RedirectResponse
+    {
+        if ($request->input('seguir') === 'hoy') {
+            return redirect()->to(cobro_route('dashboard', ['cobro' => $caja->id]))->with('ok', $texto);
+        }
+
+        return back()->with('ok', $texto);
+    }
+
+    private function puedeAperturar(User $usuario): bool
+    {
+        return $usuario->puede('cobros.registrar')
+            && ! CajaCobro::query()->where('user_id', $usuario->id)->where('abierto', true)->exists();
     }
 
     private function fecha(Request $request): string

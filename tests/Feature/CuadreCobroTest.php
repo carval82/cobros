@@ -81,12 +81,33 @@ class CuadreCobroTest extends TestCase
             ->assertJsonPath('cajas.0.ganancia', 66667);
 
         $this->actingAs($admin)
+            ->get('/')
+            ->assertOk()
+            ->assertSee('Entrar')
+            ->assertSee('Luis Cobra')
+            ->assertDontSee('Retirar la ganancia');
+
+        $this->actingAs($admin)
+            ->get('/?cobro='.$cajaId)
+            ->assertOk()
+            ->assertSee('Retirar la ganancia')
+            ->assertSee('30.900.000');
+
+        $this->actingAs($admin)
+            ->get('/cuadre')
+            ->assertOk()
+            ->assertSee('Luis Cobra')
+            ->assertSee('30.900.000')
+            ->assertDontSee('Retirar la ganancia');
+
+        $this->actingAs($admin)
             ->get('/cuadre?caja='.$cajaId)
             ->assertOk()
             ->assertSee('Cuadre')
             ->assertSee('En caja')
             ->assertSee('Luis Cobra')
-            ->assertSee('30.900.000');
+            ->assertSee('30.900.000')
+            ->assertSee('Retirar la ganancia');
 
         $otro = User::factory()->create(['rol' => 'cobrador', 'name' => 'Otro']);
         $this->actingAs($otro)->post('/cuadre/cerrar', [

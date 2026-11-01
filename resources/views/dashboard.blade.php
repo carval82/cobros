@@ -15,11 +15,50 @@
         </div>
     </header>
 
+    <section class="panel">
+        <h2>Cobros</h2>
+        <p class="ayuda">Cada cobro se entra desde aquí. Si es nuevo, se abre en esta vista y aquí mismo se desarrolla.</p>
+        @forelse ($cobros as $item)
+            <div @class(['entrada-cobro', 'activa' => $informe && $informe['id'] === $item['id']])>
+                <p>{{ $item['linea'] }}</p>
+                @if ($informe && $informe['id'] === $item['id'])
+                    <a class="btn-linea" href="{{ cobro_route('dashboard') }}">Volver</a>
+                @else
+                    <a class="btn" href="{{ cobro_route('dashboard', ['cobro' => $item['id']]) }}">Entrar</a>
+                @endif
+            </div>
+        @empty
+            <p class="vacio">Todavía no hay cobros abiertos.</p>
+        @endforelse
+
+        @if (($informe && $informe['sin_apertura'] && ! empty($informe['edita'])) || ($puedeAperturar && ! $informe))
+            <h2 style="margin-top:18px">{{ $informe ? 'Desarrollar este cobro' : 'Nuevo cobro' }}</h2>
+            <form method="post" action="{{ cobro_route('cuadre.abrir') }}">
+                @csrf
+                <input type="hidden" name="seguir" value="hoy">
+                @if ($informe)
+                    <input type="hidden" name="caja_id" value="{{ $informe['id'] }}">
+                @endif
+                <div class="fila-form">
+                    <label>Nombre del cobro
+                        <input name="nombre" value="{{ old('nombre', $informe['nombre'] ?? auth()->user()->name) }}" maxlength="80">
+                    </label>
+                    <label>Valor inicial
+                        <input name="valor_inicial" type="number" min="1" step="1" value="{{ old('valor_inicial') }}" required>
+                    </label>
+                </div>
+                <button class="btn" type="submit">Abrir y desarrollar</button>
+            </form>
+        @endif
+    </section>
+
+    @include('partials.desarrollo-cobro', ['seguir' => 'hoy'])
+
     <section class="grid-cifras">
-        <a class="cifra" href="{{ cobro_route('cuadre') }}">
+        <article class="cifra">
             <span>En caja</span>
             <strong>@dinero($enCaja)</strong>
-        </a>
+        </article>
         <article class="cifra">
             <span>Cartera en la calle</span>
             <strong>@dinero($cartera)</strong>

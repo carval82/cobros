@@ -205,6 +205,50 @@ main { min-width: 0; padding: 32px 36px 56px; }
 
 .cifra { padding: 18px 18px 16px; position: relative; overflow: hidden; }
 a.cifra { display: block; text-decoration: none; }
+.entrada-cobro {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 8px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: rgba(255, 252, 247, 0.92);
+}
+.entrada-cobro p {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    white-space: nowrap;
+    overflow-x: auto;
+    font-weight: 650;
+}
+.entrada-cobro .btn, .entrada-cobro .btn-linea { width: auto; flex: 0 0 auto; min-height: 44px; }
+.entrada-cobro.activa { border-color: #c9962e; background: rgba(228, 193, 106, 0.35); }
+a.linea-cobro {
+    display: block;
+    margin: 0 0 8px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: rgba(255, 252, 247, 0.92);
+    color: var(--ink);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow-x: auto;
+    font-weight: 650;
+}
+a.linea-cobro:hover { border-color: #c9962e; background: rgba(228, 193, 106, 0.35); }
+p.linea-cobro {
+    margin: 0 0 16px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: #1c140c;
+    color: #e4c16a;
+    white-space: nowrap;
+    overflow-x: auto;
+    font-weight: 650;
+}
 .cifra::after {
     content: "";
     position: absolute;

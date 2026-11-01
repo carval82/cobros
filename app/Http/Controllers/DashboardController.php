@@ -36,6 +36,11 @@ class DashboardController extends Controller
             ->whereHas('prestamo', fn ($q) => $q->whereIn('estado', ['activo', 'detenido']))
             ->sum('saldo');
 
+        $usuario = auth()->user();
+        $cobros = $this->cobros();
+        $id = (int) request()->query('cobro');
+        $informe = $id > 0 ? $cobros->firstWhere('id', $id) : null;
+
         return view('dashboard', [
             'hoy' => $hoy,
             'atrasadas' => $atrasadas,
@@ -43,7 +48,12 @@ class DashboardController extends Controller
             'cobrarHoy' => (int) $hoy->sum('saldo'),
             'mora' => (int) $atrasadas->sum('saldo'),
             'cobradoHoy' => (int) Pago::query()->whereDate('fecha', today())->sum('monto'),
-            'enCaja' => $this->enCaja(),
+            'enCaja' => (int) $cobros->sum('en_caja'),
+            'cobros' => $cobros,
+            'informe' => $informe,
+            'fecha' => now()->toDateString(),
+            'puedeAperturar' => $usuario instanceof User && $usuario->puede('cobros.registrar')
+                && ! CajaCobro::query()->where('user_id', $usuario->id)->where('abierto', true)->exists(),
             'detenidos' => Prestamo::query()->where('estado', 'detenido')->count(),
             'movimientos' => Movimiento::query()->with('cliente')->latest('id')->limit(8)->get(),
         ]);
@@ -80,16 +90,23 @@ class DashboardController extends Controller
         ]);
     }
 
-    private function enCaja(): int
+    private function cobros()
     {
         $usuario = auth()->user();
         if (! $usuario instanceof User) {
-            return 0;
+            return collect();
         }
 
-        return (int) CajaCobro::visiblesPara($usuario)->sum(
-            fn (CajaCobro $caja) => CuadreCobro::enCaja($caja)
-        );
+        $fecha = now()->toDateString();
+
+        return CajaCobro::visiblesPara($usuario)->map(function (CajaCobro $caja) use ($usuario, $fecha) {
+            $coordina = $usuario->es_maestro || $usuario->puede('usuarios.gestionar');
+
+            return CuadreCobro::armar($caja, $fecha) + [
+                'edita' => $usuario->puede('cobros.registrar')
+                    && ($coordina || (int) $caja->user_id === (int) $usuario->id),
+            ];
+        });
     }
 
     public function atrasados(): View

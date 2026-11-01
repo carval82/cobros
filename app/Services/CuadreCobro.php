@@ -8,6 +8,7 @@ use App\Models\Jornada;
 use App\Models\Pago;
 use App\Models\PagoCuota;
 use App\Models\Prestamo;
+use App\Support\Dinero;
 
 class CuadreCobro
 {
@@ -49,7 +50,7 @@ class CuadreCobro
             : ($valorInicial === null ? null : $valorInicial + $refuerzo - $prestadoHoy + $recaudadoHoy - $gastosHoy);
         $gananciaPositiva = max($ganancia, 0);
 
-        return [
+        $informe = [
             'id' => $caja->id,
             'nombre' => $caja->nombre,
             'tipo' => $caja->tipo,
@@ -112,6 +113,30 @@ class CuadreCobro
                     'monto' => (int) $item->monto,
                 ])->values()->all(),
         ];
+
+        $informe['linea'] = self::linea($informe);
+
+        return $informe;
+    }
+
+    public static function linea(array $informe): string
+    {
+        $tipo = ($informe['tipo'] ?? '') === 'administrador' ? 'administrador' : 'cobrador';
+        $estado = match (true) {
+            ! empty($informe['sin_apertura']) => 'Sin apertura',
+            ! empty($informe['jornada_abierta']) => 'Día abierto',
+            ! empty($informe['jornada_cerrada']) => 'Día cerrado',
+            ! empty($informe['puede_abrir_dia']) => 'Día por abrir',
+            default => 'Día pendiente',
+        };
+
+        return $informe['nombre'].' · '.$tipo
+            .' · Base '.Dinero::formato($informe['base'])
+            .' · En caja '.Dinero::formato($informe['en_caja'])
+            .' · Prestó '.Dinero::formato($informe['prestado_hoy'])
+            .' · Recaudó '.Dinero::formato($informe['recogido_hoy'])
+            .' · Ganancia '.Dinero::formato($informe['ganancia'])
+            .' · '.$estado;
     }
 
     public static function cerrar(CajaCobro $caja, Jornada $jornada, string $decision): Jornada
