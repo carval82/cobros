@@ -6,6 +6,7 @@ use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\CuadreController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmpresaController;
+use App\Http\Controllers\GuiaController;
 use App\Http\Controllers\LicenciaAdminController;
 use App\Http\Controllers\PrestamoController;
 use App\Http\Controllers\RegistroEmpresaController;
@@ -90,6 +91,7 @@ Route::middleware('auth')->group(function () use ($cartera) {
         Route::post('/licencias/generar', [LicenciaAdminController::class, 'generar'])->name('licencias.generar');
         Route::post('/licencias/{empresa}', [LicenciaAdminController::class, 'aplicar'])->name('licencias.aplicar');
     });
+    Route::get('/guia', [GuiaController::class, 'index'])->name('guia');
     Route::get('/acerca', [EmpresaController::class, 'acerca'])->name('acerca');
     Route::get('/acerca/datos', [EmpresaController::class, 'acercaDatos'])->name('acerca.datos');
     Route::post('/acerca', [EmpresaController::class, 'activar'])->name('acerca.activar');
@@ -115,6 +117,7 @@ Route::prefix('tenant/{tenant}')
         Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
 
         Route::middleware(['auth', 'empresa'])->group(function () use ($cartera) {
+            Route::get('/guia', [GuiaController::class, 'index'])->name('guia');
             Route::get('/acerca', [EmpresaController::class, 'acerca'])->name('acerca');
             Route::get('/acerca/datos', [EmpresaController::class, 'acercaDatos'])->name('acerca.datos');
             Route::post('/acerca', [EmpresaController::class, 'activar'])->name('acerca.activar');

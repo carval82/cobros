@@ -67,6 +67,12 @@
             <p class="ayuda">Salir, en la pestaña Más, cierra la sesión. La dirección y el correo siguen ahí: solo pides la clave otra vez.</p>
         </section>
 
+        <section class="panel">
+            <h2>Guía de uso</h2>
+            <p>Antes de salir a cobrar, recorre los casos: un día completo, quién puede hacer qué, y el cliente que ya debe en otro cobro.</p>
+            <p><a class="btn" href="{{ route('guia') }}">Ver la guía</a></p>
+        </section>
+
         <p class="ayuda"><a href="{{ route('dashboard') }}">Volver al inicio</a></p>
     </main>
 </body>

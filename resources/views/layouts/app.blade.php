@@ -40,6 +40,7 @@
                     @endif
                 @endif
                 <a href="{{ route('app.movil') }}" @class(['active' => request()->routeIs('app.movil')])>App del celular</a>
+                <a href="{{ cobro_route('guia') }}" @class(['active' => request()->routeIs('guia', 'tenant.guia')])>Guía</a>
                 <a href="{{ cobro_route('acerca') }}" @class(['active' => request()->routeIs('acerca', 'tenant.acerca')])>Acerca de</a>
             </nav>
             <div class="sesion">

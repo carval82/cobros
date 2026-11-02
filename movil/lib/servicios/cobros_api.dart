@@ -18,6 +18,8 @@ class CobrosApi {
       ..addAll(galletas);
   }
 
+  String get guia => '$raiz$_prefijo/guia';
+
   String get _prefijo {
     final id = tenant;
     if (id == null || id.isEmpty) return '';

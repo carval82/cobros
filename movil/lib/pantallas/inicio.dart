@@ -215,6 +215,10 @@ class _Mas extends StatelessWidget {
             child: const Text('Mi rendimiento'),
           ),
         TextButton(
+          onPressed: () => abrirEnlace(api.guia),
+          child: const Text('Guía de uso'),
+        ),
+        TextButton(
           onPressed: () {
             Navigator.of(context).push(MaterialPageRoute(builder: (_) => Acerca(api: api)));
           },

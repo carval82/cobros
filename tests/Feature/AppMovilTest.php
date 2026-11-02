@@ -19,7 +19,9 @@ class AppMovilTest extends TestCase
             ->assertSee('Ya tengo empresa')
             ->assertSee('/tenant/')
             ->assertSee('La próxima vez')
-            ->assertSee('Entrar para verla');
+            ->assertSee('Entrar para verla')
+            ->assertSee('Ver la guía')
+            ->assertSee('/guia', false);
     }
 
     public function test_muestra_el_tenant_si_la_empresa_ya_existe(): void
