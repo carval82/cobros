@@ -14,7 +14,11 @@
             </p>
         </div>
         <div class="acciones">
-            <a class="btn" href="{{ cobro_route('prestamos.create', ['cliente' => $cliente->id]) }}">Nuevo préstamo</a>
+            @if ($restringido && ! $puedeAprobar)
+                <span class="badge badge-pause">Restringido</span>
+            @else
+                <a class="btn" href="{{ cobro_route('prestamos.create', ['cliente' => $cliente->id]) }}">Nuevo préstamo</a>
+            @endif
             <a class="btn-linea" href="{{ cobro_route('clientes.edit', $cliente) }}">Editar</a>
         </div>
     </header>
@@ -26,7 +30,10 @@
     <div class="dos">
         <section class="panel">
             <h2>Préstamos</h2>
-            <p class="ayuda">Este cliente puede tener varios. Cada abono pertenece a un solo préstamo y solo a su nombre.</p>
+            <p class="ayuda">Aquí solo se ve lo de este cobro. Otro cobro no trae su saldo ni su historial.</p>
+            @if ($restringido)
+                <p class="ayuda">Este cliente ya tiene un préstamo en otro cobro. Queda restringido: el préstamo nuevo lo aprueba el administrador.</p>
+            @endif
             @if ($cliente->prestamos->isEmpty())
                 <p class="vacio">Este cliente todavía no tiene préstamos.</p>
             @else

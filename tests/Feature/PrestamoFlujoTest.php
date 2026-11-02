@@ -17,12 +17,19 @@ class PrestamoFlujoTest extends TestCase
     {
         parent::setUp();
 
+        Carbon::setTestNow('2026-10-25');
         $this->actingAs(User::factory()->create());
         $this->post('/cuadre/abrir', [
             'valor_inicial' => 1000000,
             'nombre' => 'Ruta',
         ])->assertRedirect();
         $this->get('/cobro/'.\App\Models\CajaCobro::query()->value('id').'/entrar')->assertRedirect();
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
     }
 
     public function test_crea_el_plan_cobra_y_marca_atraso(): void

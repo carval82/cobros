@@ -226,8 +226,10 @@ class CuadreCobroTest extends TestCase
         $this->actingAs($sumar);
         $this->post('/cuadre/abrir', ['valor_inicial' => 100000])->assertRedirect();
         $cajaSuma = \App\Models\CajaCobro::query()->where('user_id', $sumar->id)->value('id');
+        $this->post('/clientes', ['nombre' => 'Beto', 'telefono' => '3002223344'])->assertRedirect();
+        $clienteSuma = \App\Models\Cliente::query()->where('nombre', 'Beto')->value('id');
         $this->post('/prestamos', [
-            'cliente_id' => $clienteId,
+            'cliente_id' => $clienteSuma,
             'capital' => 40000,
             'porcentaje' => 20,
             'cuotas' => 1,

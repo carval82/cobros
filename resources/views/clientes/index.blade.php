@@ -6,7 +6,7 @@
     <header class="encabezado">
         <div>
             <h1>Clientes</h1>
-            <p>Cada cliente guarda sus préstamos, abonos y el historial.</p>
+            <p>En este cobro el cliente aparece sin el saldo ni el historial de otro. Si ya debe en otro cobro, queda restringido hasta que el administrador apruebe el préstamo aquí.</p>
         </div>
         <a class="btn" href="{{ cobro_route('clientes.create') }}">Nuevo cliente</a>
     </header>
@@ -34,6 +34,9 @@
                         <tr>
                             <td>
                                 <a href="{{ cobro_route('clientes.show', $cliente) }}"><strong>{{ $cliente->nombre }}</strong></a>
+                                @if ($cliente->restringido)
+                                    <span class="badge badge-pause">Restringido</span>
+                                @endif
                                 <div class="muted">{{ $cliente->documento }}</div>
                             </td>
                             <td>{{ $cliente->telefono }}</td>

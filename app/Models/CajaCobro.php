@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\FiltraEmpresa;
 use App\Models\Concerns\UsaBaseTenant;
+use App\Support\CobroActivo;
 use App\Support\EmpresaActual;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -150,6 +151,29 @@ class CajaCobro extends Model
             ->orderByRaw("case when tipo = 'administrador' then 0 else 1 end")
             ->orderBy('nombre')
             ->get();
+    }
+
+    public static function enCurso(?User $usuario = null): ?self
+    {
+        $activa = CobroActivo::caja();
+        if ($activa) {
+            return $activa;
+        }
+
+        $usuario ??= auth()->user();
+        if (! $usuario instanceof User) {
+            return null;
+        }
+
+        return static::query()
+            ->where('abierto', true)
+            ->where(function ($q) use ($usuario) {
+                $q->where('user_id', $usuario->id)
+                    ->orWhereHas('integrantes', fn ($i) => $i->where('user_id', $usuario->id));
+            })
+            ->whereHas('jornadas', fn ($q) => $q->whereDate('fecha', today())->where('cerrada', false))
+            ->orderByRaw('case when user_id = ? then 0 else 1 end', [$usuario->id])
+            ->first();
     }
 
     public static function conDiaAbierto(User $usuario)

@@ -6,7 +6,7 @@
     <header class="encabezado">
         <div>
             <h1>Nuevo préstamo</h1>
-            <p class="ayuda">El préstamo sale de un cobro abierto y de un solo cliente. Ese cliente puede tener varios préstamos, incluso en cobros distintos. Cada abono queda en un solo préstamo. El porcentaje es el interés de todo el préstamo: 100.000 al 20% en 5 semanas quedan en 120.000.</p>
+            <p class="ayuda">El préstamo sale de este cobro y de un solo cliente. Si ese cliente ya debe en otro cobro, queda restringido y solo el administrador aprueba el préstamo nuevo. El porcentaje es el interés de todo el préstamo: 100.000 al 20% en 5 semanas quedan en 120.000.</p>
             @if (! empty($demo))
                 <p class="ayuda">Versión demo: {{ $usados }} de {{ \App\Models\Empresa::LIMITE_DEMO }} préstamos. La completa se activa en Acerca de.</p>
             @endif
@@ -40,7 +40,7 @@
                         <option value="" @selected(! old('cliente_id', $clienteId))>Elegir cliente</option>
                         @foreach ($clientes as $cliente)
                             <option value="{{ $cliente->id }}" @selected((string) old('cliente_id', $clienteId) === (string) $cliente->id)>
-                                {{ $cliente->nombre }}
+                                {{ $cliente->nombre }}{{ $cliente->restringido ? ' · restringido' : '' }}
                             </option>
                         @endforeach
                     </select>

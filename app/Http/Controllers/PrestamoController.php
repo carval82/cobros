@@ -36,7 +36,17 @@ class PrestamoController extends Controller
         $empresa = \App\Support\EmpresaActual::empresa();
 
         return view('prestamos.create', [
-            'clientes' => Cliente::query()->orderBy('nombre')->get(),
+            'clientes' => Cliente::query()
+                ->withExists(['prestamos as restringido' => function ($query) use ($request) {
+                    $cajaId = CajaCobro::enCurso($request->user())?->id;
+                    $query->whereIn('estado', ['activo', 'detenido'])
+                        ->when($cajaId, fn ($q) => $q->where(function ($q) use ($cajaId) {
+                            $q->where('caja_cobro_id', '!=', $cajaId)->orWhereNull('caja_cobro_id');
+                        }));
+                }])
+                ->orderBy('nombre')
+                ->get(),
+            'puedeAprobar' => $request->user()->coordina(),
             'clienteId' => $clienteId,
             'cobros' => $this->cobrosDelFormulario($request),
             'frecuencias' => PlanPagos::FRECUENCIAS,
@@ -66,6 +76,12 @@ class PrestamoController extends Controller
         ]);
 
         $caja = $this->cobroDelPrestamo($request);
+        $cliente = Cliente::query()->findOrFail($datos['cliente_id']);
+        if ($cliente->abiertoEnOtro($caja->id) && ! $request->user()->coordina()) {
+            throw ValidationException::withMessages([
+                'cliente_id' => 'Este cliente ya tiene un préstamo en otro cobro. Solo el administrador puede aprobar uno nuevo aquí.',
+            ]);
+        }
         $diaPrestamo = now()->startOfDay();
         $pedida = Carbon::parse($datos['fecha_primer_pago'])->startOfDay();
         $fechaPrimerPago = $pedida->lte($diaPrestamo)

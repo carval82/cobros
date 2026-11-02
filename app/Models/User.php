@@ -65,6 +65,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function coordina(): bool
+    {
+        return $this->es_maestro || $this->puede('usuarios.gestionar');
+    }
+
     public function puede(string $permiso): bool
     {
         if ($this->es_maestro) {

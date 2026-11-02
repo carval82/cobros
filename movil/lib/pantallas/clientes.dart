@@ -110,6 +110,7 @@ class _ClientesState extends State<Clientes> {
                                             runSpacing: 6,
                                             children: [
                                               Pastilla(pesos(item['saldo'])),
+                                              if (item['restringido'] == true) const Pastilla('Restringido', tono: peligro),
                                               Pastilla(numero(item['latitud']) == null ? 'Sin GPS' : 'En el mapa', tono: numero(item['latitud']) == null ? peligro : ok),
                                             ],
                                           ),

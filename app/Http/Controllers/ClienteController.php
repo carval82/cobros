@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CajaCobro;
 use App\Models\Cliente;
 use App\Models\Prestamo;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,24 +17,8 @@ class ClienteController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
 
-        $clientes = Cliente::query()
-            ->withCount('prestamos')
-            ->withSum(['cuotas as saldo' => function ($query) {
-                $query->where('cuotas.saldo', '>', 0)
-                    ->whereHas('prestamo', fn ($p) => $p->whereIn('estado', ['activo', 'detenido']));
-            }], 'saldo')
-            ->when($q !== '', function ($query) use ($q) {
-                $query->where(function ($filtro) use ($q) {
-                    $filtro->where('nombre', 'like', "%{$q}%")
-                        ->orWhere('documento', 'like', "%{$q}%")
-                        ->orWhere('telefono', 'like', "%{$q}%");
-                });
-            })
-            ->orderBy('nombre')
-            ->get();
-
         return view('clientes.index', [
-            'clientes' => $clientes,
+            'clientes' => $this->lista($q),
             'q' => $q,
         ]);
     }
@@ -41,32 +27,18 @@ class ClienteController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
 
-        $clientes = Cliente::query()
-            ->withCount('prestamos')
-            ->withSum(['cuotas as saldo' => function ($query) {
-                $query->where('cuotas.saldo', '>', 0)
-                    ->whereHas('prestamo', fn ($p) => $p->whereIn('estado', ['activo', 'detenido']));
-            }], 'saldo')
-            ->when($q !== '', function ($query) use ($q) {
-                $query->where(function ($filtro) use ($q) {
-                    $filtro->where('nombre', 'like', "%{$q}%")
-                        ->orWhere('documento', 'like', "%{$q}%")
-                        ->orWhere('telefono', 'like', "%{$q}%");
-                });
-            })
-            ->orderBy('nombre')
-            ->get();
-
         return response()->json([
             'token' => csrf_token(),
-            'clientes' => $clientes->map(fn (Cliente $cliente) => $this->fila($cliente))->values(),
+            'clientes' => $this->lista($q)->map(fn (Cliente $cliente) => $this->fila($cliente))->values(),
         ]);
     }
 
     public function mostrar(Cliente $cliente): JsonResponse
     {
-        $cliente->load(['prestamos' => fn ($q) => $q->with('cuotas')->latest('id')]);
-        $cliente->loadCount('prestamos');
+        $cajaId = CajaCobro::enCurso()?->id;
+        $cliente->load(['prestamos' => fn ($q) => $this->delCobro($q, $cajaId)->with('cuotas')->latest('id')]);
+        $cliente->setAttribute('restringido', $cliente->abiertoEnOtro($cajaId));
+        $cliente->loadCount(['prestamos' => fn ($q) => $this->delCobro($q, $cajaId)]);
 
         return response()->json([
             'token' => csrf_token(),
@@ -103,12 +75,21 @@ class ClienteController extends Controller
 
     public function show(Cliente $cliente): View
     {
+        $cajaId = CajaCobro::enCurso()?->id;
         $cliente->load([
-            'prestamos' => fn ($q) => $q->with('cuotas')->latest('id'),
-            'movimientos' => fn ($q) => $q->latest('id'),
+            'prestamos' => fn ($q) => $this->delCobro($q, $cajaId)->with('cuotas')->latest('id'),
+            'movimientos' => fn ($q) => $q
+                ->when($cajaId, fn ($q) => $q->whereHas('prestamo', fn ($p) => $p->where('caja_cobro_id', $cajaId)))
+                ->when(! $cajaId, fn ($q) => $q->whereRaw('1 = 0'))
+                ->latest('id'),
         ]);
+        $usuario = auth()->user();
 
-        return view('clientes.show', ['cliente' => $cliente]);
+        return view('clientes.show', [
+            'cliente' => $cliente,
+            'restringido' => $cliente->abiertoEnOtro($cajaId),
+            'puedeAprobar' => $usuario instanceof User && $usuario->coordina(),
+        ]);
     }
 
     public function edit(Cliente $cliente): View
@@ -152,11 +133,50 @@ class ClienteController extends Controller
         ]);
     }
 
+    private function lista(string $q)
+    {
+        $cajaId = CajaCobro::enCurso()?->id;
+
+        return Cliente::query()
+            ->withCount(['prestamos' => fn ($consulta) => $this->delCobro($consulta, $cajaId)])
+            ->withSum(['cuotas as saldo' => function ($query) use ($cajaId) {
+                $query->where('cuotas.saldo', '>', 0)
+                    ->whereHas('prestamo', fn ($p) => $this->delCobro($p, $cajaId)->whereIn('estado', ['activo', 'detenido']));
+            }], 'saldo')
+            ->withExists(['prestamos as restringido' => function ($query) use ($cajaId) {
+                $query->whereIn('estado', ['activo', 'detenido'])
+                    ->when($cajaId, fn ($q) => $q->where(function ($q) use ($cajaId) {
+                        $q->where('caja_cobro_id', '!=', $cajaId)->orWhereNull('caja_cobro_id');
+                    }));
+            }])
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($filtro) use ($q) {
+                    $filtro->where('nombre', 'like', "%{$q}%")
+                        ->orWhere('documento', 'like', "%{$q}%")
+                        ->orWhere('telefono', 'like', "%{$q}%");
+                });
+            })
+            ->orderBy('nombre')
+            ->get();
+    }
+
+    private function delCobro(object $query, ?int $cajaId): object
+    {
+        return $cajaId
+            ? $query->where($query->getModel()->getTable().'.caja_cobro_id', $cajaId)
+            : $query->whereRaw('1 = 0');
+    }
+
     private function fila(Cliente $cliente, bool $desdePrestamos = false): array
     {
+        $cajaId = CajaCobro::enCurso()?->id;
         $saldo = $desdePrestamos
             ? (int) $cliente->prestamos->sum(fn (Prestamo $prestamo) => in_array($prestamo->estado, ['activo', 'detenido'], true) ? $prestamo->saldo() : 0)
             : (int) ($cliente->getAttribute('saldo') ?? 0);
+        $restringido = $cliente->offsetExists('restringido')
+            ? (bool) $cliente->restringido
+            : $cliente->abiertoEnOtro($cajaId);
+        $usuario = auth()->user();
 
         return [
             'id' => $cliente->id,
@@ -167,8 +187,10 @@ class ClienteController extends Controller
             'notas' => $cliente->notas,
             'latitud' => $cliente->latitud,
             'longitud' => $cliente->longitud,
-            'prestamos' => (int) ($cliente->prestamos_count ?? 0),
+            'prestamos' => (int) ($cliente->prestamos_count ?? $cliente->prestamos->count()),
             'saldo' => $saldo,
+            'restringido' => $restringido,
+            'bloqueado' => $restringido && ! ($usuario instanceof User && $usuario->coordina()),
         ];
     }
 

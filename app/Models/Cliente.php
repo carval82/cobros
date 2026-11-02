@@ -42,6 +42,16 @@ class Cliente extends Model
         return $this->hasMany(Prestamo::class);
     }
 
+    public function abiertoEnOtro(?int $cajaId): bool
+    {
+        return $this->prestamos()
+            ->whereIn('estado', ['activo', 'detenido'])
+            ->when($cajaId, fn ($q) => $q->where(function ($q) use ($cajaId) {
+                $q->where('caja_cobro_id', '!=', $cajaId)->orWhereNull('caja_cobro_id');
+            }))
+            ->exists();
+    }
+
     public function cuotas(): HasManyThrough
     {
         return $this->hasManyThrough(Cuota::class, Prestamo::class);

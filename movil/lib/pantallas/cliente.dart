@@ -128,7 +128,12 @@ class _ClienteVistaState extends State<ClienteVista> {
             ),
           ),
           const Titulo('PRÉSTAMOS'),
-          if (prestamos.isEmpty) const Text('Este cliente todavía no tiene préstamos.', style: TextStyle(color: muted)),
+          if (mapa['restringido'] == true)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: Text('Este cliente ya debe en otro cobro. Aquí no se ve ese saldo. El préstamo nuevo lo aprueba el administrador.', style: TextStyle(color: peligro)),
+            ),
+          if (prestamos.isEmpty) const Text('Este cliente todavía no tiene préstamos en este cobro.', style: TextStyle(color: muted)),
           for (final item in prestamos)
             if (item is Map)
               Lamina(
@@ -164,7 +169,7 @@ class _ClienteVistaState extends State<ClienteVista> {
                   ),
                 ),
               ),
-          if (widget.puedePrestamos) ...[
+          if (widget.puedePrestamos && mapa['bloqueado'] != true) ...[
             const SizedBox(height: 8),
             FilledButton(
               onPressed: () async {
