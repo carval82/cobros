@@ -92,9 +92,17 @@ class RegistroEmpresaController extends Controller
                 ->withInput();
         }
 
+        $empresa->refresh();
+
+        if ($request->input('origen') === 'guia' && ! $request->expectsJson()) {
+            return redirect()
+                ->route('tenant.login', ['tenant' => $empresa->uuid])
+                ->with('ok', 'Tu cobro quedó en versión demo. Entra con el correo que acabas de escribir. En el celular guarda esta dirección: ahí se abre el ingreso de tu empresa, no la pantalla de crear otra.')
+                ->with('direccion', $empresa->direccion());
+        }
+
         Auth::login($administrador, true);
         $request->session()->regenerate();
-        $empresa->refresh();
 
         if ($request->expectsJson()) {
             return response()->json([

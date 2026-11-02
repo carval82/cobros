@@ -16,15 +16,23 @@ class GuiaTest extends TestCase
         $this->assertTrue(Route::has('guia'));
         $this->assertTrue(Route::has('tenant.guia'));
 
+        $this->get('/guia')
+            ->assertOk()
+            ->assertSee('¿Quieres ver cómo funciona?')
+            ->assertSee('Entrar a la visita')
+            ->assertSee('cualquier correo')
+            ->assertSee('Restringido')
+            ->assertSee('Crear mi cobro en demo')
+            ->assertDontSee('caja_cobro');
+
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee('¿Quieres ver cómo funciona?');
+
         $this->actingAs(User::factory()->create())
             ->get('/guia')
             ->assertOk()
-            ->assertSee('Guía de Cobros')
-            ->assertSee('Cada cobro es su propia caja')
-            ->assertSee('Primero se entra al cobro')
-            ->assertSee('Restringido')
-            ->assertSee('El administrador aprueba con el préstamo')
-            ->assertSee('La misma ruta, en el celular')
-            ->assertDontSee('caja_cobro');
+            ->assertSee('Visita guiada')
+            ->assertSee('Envía solo esta dirección');
     }
 }

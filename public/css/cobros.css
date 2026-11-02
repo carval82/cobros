@@ -582,6 +582,40 @@ a.direccion-corta { display: inline-block; max-width: 240px; margin: 0; padding:
 .mini-telefono { width: min(240px, 100%); margin: 0 auto; border: 8px solid var(--navy); border-radius: 28px; min-height: 220px; }
 .mini-rol { display: grid; gap: 8px; }
 
+.guia-publica { max-width: 720px; margin: 0 auto; padding: 28px 20px 64px; }
+.guia-publica.visita-activa { max-width: none; margin: 0; padding: 0; }
+.guia-publica.visita-activa .marca-publica { display: none; }
+.visita-app { min-height: 100vh; background: transparent; }
+.visita-app .side nav button {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    color: #e6dccb;
+    border-radius: 12px;
+    padding: 11px 12px;
+    font-weight: 500;
+}
+.visita-app .side nav button.activo { background: var(--signal); color: #152016; }
+.visita-app .side nav button[hidden] { display: none !important; }
+.visita-app .entrada-cobro,
+.visita-app .panel,
+.visita-app .grid-cifras { max-width: 680px; }
+.coach {
+    margin-top: 18px;
+    padding: 16px 18px;
+    border-radius: 22px;
+    background: var(--navy);
+    color: #f8f1e4;
+    box-shadow: var(--shadow);
+}
+.coach .kicker { color: var(--signal); }
+.coach p { margin: 0; }
+#puerta { max-width: 460px; }
+#programa[hidden], #puerta[hidden] { display: none; }
+.marca-publica { display: inline-block; margin-bottom: 18px; }
+.marca-publica img { background: #fff; border-radius: 18px; padding: 8px; }
+.guia-publica .direccion-tenant { overflow-wrap: anywhere; }
+
 .guia { max-width: 720px; margin: 0 auto; padding: 32px 20px 64px; }
 .guia img { background: white; border-radius: 24px; padding: 12px; }
 .guia ol { margin: 0; padding-left: 1.2rem; }

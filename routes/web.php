@@ -72,6 +72,7 @@ $cartera = function () {
 
 Route::get('/', [RegistroEmpresaController::class, 'portada'])->name('dashboard');
 Route::get('/app', [AppMovilController::class, 'index'])->name('app.movil');
+Route::get('/guia', [GuiaController::class, 'index'])->name('guia');
 Route::post('/registrar', [RegistroEmpresaController::class, 'store'])->middleware(['guest', 'throttle:5,1'])->name('registrar.store');
 
 Route::middleware('guest')->group(function () {
@@ -91,7 +92,6 @@ Route::middleware('auth')->group(function () use ($cartera) {
         Route::post('/licencias/generar', [LicenciaAdminController::class, 'generar'])->name('licencias.generar');
         Route::post('/licencias/{empresa}', [LicenciaAdminController::class, 'aplicar'])->name('licencias.aplicar');
     });
-    Route::get('/guia', [GuiaController::class, 'index'])->name('guia');
     Route::get('/acerca', [EmpresaController::class, 'acerca'])->name('acerca');
     Route::get('/acerca/datos', [EmpresaController::class, 'acercaDatos'])->name('acerca.datos');
     Route::post('/acerca', [EmpresaController::class, 'activar'])->name('acerca.activar');

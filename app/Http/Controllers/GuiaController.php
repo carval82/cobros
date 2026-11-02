@@ -9,8 +9,10 @@ class GuiaController extends Controller
     public function index(): View
     {
         return view('guia', [
-            'hoy' => cobro_route('dashboard'),
+            'hoy' => auth()->check() ? cobro_route('dashboard') : null,
             'celular' => route('app.movil'),
+            'puedeCrear' => auth()->guest(),
+            'direccionGuia' => route('guia'),
         ]);
     }
 }

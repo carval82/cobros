@@ -16,11 +16,11 @@ class AppMovilTest extends TestCase
         $this->get('/app')
             ->assertOk()
             ->assertSee('Configura el celular')
-            ->assertSee('Ya tengo empresa')
+            ->assertSee('Dirección de ingreso')
             ->assertSee('/tenant/')
             ->assertSee('La próxima vez')
-            ->assertSee('Entrar para verla')
-            ->assertSee('Ver la guía')
+            ->assertSee('¿Quieres ver cómo funciona?')
+            ->assertSee('Ver la visita guiada')
             ->assertSee('/guia', false);
     }
 

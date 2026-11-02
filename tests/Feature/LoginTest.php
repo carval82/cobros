@@ -51,7 +51,7 @@ class LoginTest extends TestCase
     {
         $this->artisan('cobros:usuario-maestro')->assertSuccessful();
 
-        $this->get('/login')->assertOk()->assertSee('Entrar')->assertDontSee('Crea la primera cuenta');
+        $this->get('/login')->assertOk()->assertSee('Entrar')->assertSee('¿Quieres ver cómo funciona?')->assertDontSee('Crea la primera cuenta');
 
         $this->post('/login', [
             'email' => 'pcapacho24@gmail.com',

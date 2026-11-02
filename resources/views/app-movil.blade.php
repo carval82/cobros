@@ -13,14 +13,16 @@
         <p class="kicker">En el teléfono</p>
         <h1>Configura el celular</h1>
         <p>La primera vez dejas lista la empresa. Después la app abre directo en Hoy, con la misma dirección y el mismo correo.</p>
+        <p><a class="btn" href="{{ route('guia') }}">¿Quieres ver cómo funciona?</a></p>
+        <p class="ayuda">La visita se abre con cualquier correo. No pide la clave del programa real.</p>
 
         <section class="panel">
             <h2>Dirección del tenant</h2>
             @if ($empresas->isEmpty())
-                <p>Entra con la empresa para ver aquí el número y la dirección que se pega en el celular.</p>
-                <p><a class="btn" href="{{ route('login') }}">Entrar para verla</a></p>
+                <p>La dirección del celular aparece cuando la empresa ya existe. Antes puedes recorrer la visita, sin cuenta.</p>
+                <p><a class="btn" href="{{ route('guia') }}">Ver la visita guiada</a></p>
             @else
-                <p class="ayuda">Si la empresa ya está creada, esta es la dirección. En el celular toca <strong>Ya tengo empresa</strong> y pégala en Dirección del tenant.</p>
+                <p class="ayuda">Si la empresa ya está creada, esta es la dirección de ingreso. En el celular se pega en Dirección de ingreso. Esa pantalla no crea otra empresa.</p>
                 @foreach ($empresas as $empresa)
                     @php $direccion = $empresa->direccion(); @endphp
                     <article style="margin-top:16px">
@@ -54,8 +56,8 @@
         <section class="panel">
             <h2>La primera vez</h2>
             <ol>
-                <li>Abre Cobras. Si vas a estrenar la empresa, déjala en <strong>Crear empresa</strong>: nombre, administrador, correo y clave. La app guarda la dirección <strong>/tenant/</strong> que se genera.</li>
-                <li>Si la empresa ya existe, toca <strong>Ya tengo empresa</strong>. En Servidor deja la raíz del sitio. En Dirección pega el enlace completo, el que termina en <strong>/tenant/</strong> y el número de la empresa.</li>
+                <li>Abre la guía y, al final, crea el cobro en versión demo. Quedas en el ingreso de tu empresa. Guarda esa dirección.</li>
+                <li>En el celular, Cobras abre en el ingreso. En Servidor deja la raíz del sitio. En Dirección de ingreso pega el enlace completo, el que termina en <strong>/tenant/</strong> y el número.</li>
                 <li>Escribe el correo y la clave de esa persona. Puede ser el administrador, un cobrador o consulta.</li>
                 <li>Acepta la ubicación. Sin eso no se guarda el punto del cobro ni se ordena la ruta desde donde estás.</li>
             </ol>

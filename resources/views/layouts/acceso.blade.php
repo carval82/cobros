@@ -18,6 +18,13 @@
             <p class="acceso-pie">Cada empresa abre su propia base y entra por su número de tenant, pegado a la raíz del sitio.</p>
         </aside>
         <main class="acceso">
+            @if (session('ok'))
+                <p class="aviso aviso-ok">{{ session('ok') }}</p>
+            @endif
+            @if (session('direccion'))
+                <p class="direccion-tenant"><span>Guarda esta dirección</span>{{ session('direccion') }}</p>
+                <p class="ayuda">En el celular abre Cobras, indica que ya tienes empresa y pega esta dirección. Esa pantalla es el ingreso. No crees otra empresa.</p>
+            @endif
             @if ($errors->any())
                 <div class="aviso aviso-error">
                     @foreach ($errors->all() as $error)

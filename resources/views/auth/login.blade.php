@@ -14,6 +14,9 @@
         @endif
     </p>
 
+    <p><a class="btn" href="{{ route('guia') }}">¿Quieres ver cómo funciona?</a></p>
+    <p class="ayuda">Es una visita guiada. Entras con cualquier correo y ves los casos de uso. No abre el programa real.</p>
+
     <form method="post" action="{{ cobro_route('login.store') }}">
         @csrf
         @if ($primeraCuenta)

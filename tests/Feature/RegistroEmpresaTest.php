@@ -48,6 +48,31 @@ class RegistroEmpresaTest extends TestCase
         $this->assertStringContainsString('/tenant/'.$empresa->uuid, session('ok'));
     }
 
+    public function test_la_guia_crea_la_demo_y_deja_el_ingreso_de_esa_empresa(): void
+    {
+        $respuesta = $this->from('/guia')->post('/registrar', [
+            'origen' => 'guia',
+            'nombre' => 'Norte',
+            'usuario_nombre' => 'Ana Admin',
+            'usuario_email' => 'ana@guia.test',
+            'usuario_password' => 'secreto12',
+            'usuario_password_confirmation' => 'secreto12',
+        ]);
+
+        $empresa = Empresa::query()->where('email', 'ana@guia.test')->first();
+        $this->assertNotNull($empresa?->base_datos);
+        $this->assertGuest();
+
+        $respuesta->assertRedirect(route('tenant.login', ['tenant' => $empresa->uuid]));
+        $respuesta->assertSessionHas('direccion', $empresa->direccion());
+
+        $this->get(route('tenant.login', ['tenant' => $empresa->uuid]))
+            ->assertOk()
+            ->assertSee('Guarda esta dirección')
+            ->assertSee('/tenant/'.$empresa->uuid)
+            ->assertDontSee('Crear una empresa');
+    }
+
     public function test_el_celular_recibe_la_direccion_y_la_sesion(): void
     {
         $this->postJson('/registrar', [

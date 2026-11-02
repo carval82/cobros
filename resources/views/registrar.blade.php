@@ -26,6 +26,7 @@
         <p class="ayuda">La prueba dura 30 días y permite {{ \App\Models\Empresa::LIMITE_DEMO }} préstamos. Después entras por la dirección que se genera.</p>
         <button class="btn" type="submit">Crear empresa</button>
     </form>
+    <p><a class="btn" href="{{ route('guia') }}">¿Quieres ver cómo funciona?</a></p>
     <p class="ayuda"><a href="{{ route('login') }}">Ya tengo empresa</a></p>
     <p class="ayuda"><a href="{{ route('app.movil') }}">Configurar y bajar la app</a></p>
 @endsection

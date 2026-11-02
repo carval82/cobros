@@ -1,366 +1,308 @@
-@extends('layouts.app')
+@extends('layouts.publico')
 
-@section('titulo', 'Guía · Cobros')
+@section('titulo', 'Visita guiada · Cobros')
 
 @section('contenido')
-    <header class="encabezado">
-        <div>
-            <p class="kicker">Para el equipo</p>
-            <h1>Guía de Cobros</h1>
-            <p>Una charla corta para aprender el manejo. Elige un caso y sigue los pasos.</p>
+    <section id="puerta">
+        <p class="kicker">Visita guiada</p>
+        <h1>¿Quieres ver cómo funciona?</h1>
+        <p>Escribe cualquier correo y cualquier clave. Entras a un recorrido por los casos de uso. No es el programa real y no se crea una empresa.</p>
+        <form id="puerta-form">
+            <label>Correo
+                <input id="correo" type="email" autocomplete="off" required placeholder="el-que-quieras@correo.com">
+            </label>
+            <label>Clave
+                <input id="clave" type="password" autocomplete="off" required placeholder="la que sea">
+            </label>
+            <button class="btn" type="submit">Entrar a la visita</button>
+        </form>
+        @auth
+            <p class="direccion-tenant"><span>Envía solo esta dirección</span>{{ $direccionGuia }}</p>
+        @endauth
+    </section>
+
+    <section id="programa" hidden>
+        <div class="app visita-app">
+            <aside class="side">
+                <a class="marca" href="{{ route('guia') }}">
+                    <img class="marca-logo" src="{{ asset('image/cobras.png') }}" alt="Cobras">
+                </a>
+                <nav id="menu">
+                    <button type="button" data-ir="hoy" data-menu="hoy">Hoy</button>
+                    <p class="cobro-menu" id="cobro-activo" hidden></p>
+                    <button type="button" data-ir="cuadre" data-menu="cuadre" hidden>Cuadre</button>
+                    <button type="button" data-ir="clientes" data-menu="clientes" hidden>Clientes</button>
+                    <button type="button" data-ir="prestamo" data-menu="prestamo" hidden>Nuevo préstamo</button>
+                </nav>
+                <div class="sesion">
+                    <p id="sesion-correo">Visita</p>
+                    <p>Visita guiada</p>
+                    <button class="salir" type="button" id="salir">Salir de la visita</button>
+                </div>
+            </aside>
+            <main>
+                <p class="aviso">Estás en una visita. Nada de esto se guarda.</p>
+                <div id="pantalla"></div>
+                <div class="coach" id="coach">
+                    <p class="kicker" id="coach-paso"></p>
+                    <p id="coach-texto"></p>
+                </div>
+            </main>
         </div>
-    </header>
+    </section>
 
-    <div class="relato">
-        <article class="charla charla-inicio" id="inicio">
-            <div class="escenario">
-                <p class="mini-nota">Dos cobros, dos cajas</p>
-                <div class="mini-par">
-                    <div class="mini-cobro">
-                        <span>Norte</span>
-                        <strong>$ 500.000</strong>
-                        <p>Su plata y sus préstamos</p>
-                    </div>
-                    <div class="mini-cobro mini-otro">
-                        <span>Sur</span>
-                        <strong>$ 200.000</strong>
-                        <p>Otra caja, otra historia</p>
-                    </div>
-                </div>
+    <template id="vista-hoy">
+        <header class="encabezado">
+            <div>
+                <p class="kicker">Jornada</p>
+                <h1>Hoy</h1>
+                <p>Dos cobros. Todavía no entras a ninguno.</p>
             </div>
-            <div class="burbuja">
-                <img src="{{ asset('image/cobras.png') }}" alt="" width="72" height="66">
-                <div>
-                    <p class="kicker">Guía</p>
-                    <h2>¿Por dónde empezamos?</h2>
-                    <p>Cobros es el cuaderno de quien presta y cobra en la calle. Cada cobro es una caja distinta. Tú eliges y yo te llevo.</p>
-                    <div class="respuestas">
-                        <a class="btn" href="#dia-caja">Ver un día de cobro</a>
-                        <a class="btn" href="#roles">Quién puede hacer qué</a>
-                        <a class="btn" href="#otro-debe">Un cliente que ya debe en otro cobro</a>
-                        <a class="btn" href="#celular">Usarlo en el celular</a>
-                    </div>
-                </div>
+        </header>
+        <section class="panel">
+            <h2>Cobros</h2>
+            <div class="entrada-cobro">
+                <p>Norte</p>
+                <button class="btn" type="button" data-ir="entrar-norte">Entrar</button>
             </div>
-        </article>
+            <div class="entrada-cobro">
+                <p>Sur</p>
+                <button class="btn" type="button" data-ir="entrar-sur">Entrar</button>
+            </div>
+        </section>
+    </template>
 
-        <article class="charla" id="dia-caja">
-            <div class="escenario">
-                <p class="mini-nota">Lo de Norte se queda en Norte</p>
-                <div class="mini-par">
-                    <div class="mini-cobro">
-                        <span>Norte</span>
-                        <strong>Ana</strong>
-                        <p>Debe $ 120.000 aquí</p>
-                    </div>
-                    <div class="mini-cobro mini-otro">
-                        <span>Sur</span>
-                        <strong>Ana</strong>
-                        <p>Saldo $ 0 en este cobro</p>
-                    </div>
-                </div>
+    <template id="vista-norte">
+        <header class="encabezado">
+            <div>
+                <p class="kicker">Cobro</p>
+                <h1>Norte</h1>
+                <p>Solo</p>
             </div>
-            <div class="burbuja">
-                <div>
-                    <p class="kicker">Paso 1 de 6</p>
-                    <h2>Cada cobro es su propia caja</h2>
-                    <p>Norte tiene su plata y sus préstamos. Sur tiene los suyos. Lo que se presta en uno se cobra en ese mismo. El otro cobro no trae esa deuda ni esa historia.</p>
-                    <div class="acciones">
-                        <a class="btn" href="#dia-abrir">Siguiente</a>
-                        <a class="btn-linea" href="#inicio">Elegir otro caso</a>
-                    </div>
-                </div>
+            <div class="acciones">
+                <button class="btn-linea" type="button" data-ir="volver">Volver a los cobros</button>
             </div>
-        </article>
+        </header>
+        <section class="grid-cifras">
+            <article class="cifra"><span>En caja</span><strong>$ 500.000</strong></article>
+            <article class="cifra"><span>Cartera en la calle</span><strong>$ 120.000</strong></article>
+            <article class="cifra"><span>Para cobrar hoy</span><strong>$ 24.000</strong></article>
+        </section>
+        <section class="panel">
+            <h2>Ana Pérez debe en Norte</h2>
+            <p>Saldo de este cobro: <strong>$ 120.000</strong>. El historial que ves es solo de Norte.</p>
+        </section>
+    </template>
 
-        <article class="charla" id="dia-abrir">
-            <div class="escenario">
-                <p class="mini-nota">Así se abre el día</p>
-                <div class="mini-cobro">
-                    <span>Nuevo cobro</span>
-                    <strong>$ 500.000</strong>
-                    <p>La plata con la que se sale</p>
-                </div>
-                <div class="mini-menu">
-                    <span>Solo</span>
-                    <span>O con cobradores</span>
-                </div>
-            </div>
-            <div class="burbuja">
-                <div>
-                    <p class="kicker">Paso 2 de 6</p>
-                    <h2>El día empieza al abrir</h2>
-                    <p>Se anota con cuánta plata se sale. Esa es la base. El administrador puede abrir varios cobros. El cobrador abre uno. Puede ir solo o llevar a otros cobradores en el mismo cobro.</p>
-                    <div class="acciones">
-                        <a class="btn" href="#dia-entrar">Siguiente</a>
-                        <a class="btn-linea" href="#dia-caja">Atrás</a>
-                    </div>
-                </div>
-            </div>
-        </article>
+    <template id="vista-clientes-norte">
+        <header class="encabezado"><div><p class="kicker">Norte</p><h1>Clientes</h1></div></header>
+        <section class="panel">
+            <button class="btn" type="button" data-ir="ana">Ana Pérez · $ 120.000</button>
+        </section>
+    </template>
 
-        <article class="charla" id="dia-entrar">
-            <div class="escenario">
-                <p class="mini-nota">Hoy, antes de entrar</p>
-                <div class="mini-fila">
-                    <div>
-                        <strong>Ruta centro</strong>
-                        <p>Solo el nombre</p>
-                    </div>
-                    <span class="mini-entrar">Entrar</span>
-                </div>
-                <p class="mini-nota">Después de entrar</p>
-                <div class="mini-menu">
-                    <span>Cuadre</span>
-                    <span>Ruta</span>
-                    <span>Atrasados</span>
-                    <span>Clientes</span>
-                    <span>Nuevo préstamo</span>
-                </div>
-            </div>
-            <div class="burbuja">
-                <div>
-                    <p class="kicker">Paso 3 de 6</p>
-                    <h2>Primero se entra al cobro</h2>
-                    <p>En Hoy se ve el nombre y el botón Entrar. Las cifras, la ruta y los clientes aparecen después. Para cambiar de cobro se toca Volver a los cobros.</p>
-                    <div class="acciones">
-                        <a class="btn" href="#dia-prestar">Siguiente</a>
-                        <a class="btn-linea" href="#dia-abrir">Atrás</a>
-                    </div>
-                </div>
-            </div>
-        </article>
+    <template id="vista-ana">
+        <header class="encabezado"><div><p class="kicker">Norte</p><h1>Ana Pérez</h1><p>Préstamo de $ 100.000 al 20 %. Saldo $ 120.000.</p></div></header>
+        <section class="panel">
+            <p>Cuota de esta semana: $ 24.000.</p>
+            <button class="btn" type="button" data-ir="abonar">Anotar abono de $ 24.000</button>
+        </section>
+    </template>
 
-        <article class="charla" id="dia-prestar">
-            <div class="escenario">
-                <p class="mini-nota">Cliente y préstamo de este cobro</p>
-                <div class="mini-persona">
-                    <strong>Ana Pérez</strong>
-                    <p>300 111 2233</p>
-                </div>
-                <div class="mini-cobro">
-                    <span>Se le entregan $ 100.000</span>
-                    <strong>$ 120.000</strong>
-                    <p>Al 20 %, en pagos semanales</p>
-                </div>
-            </div>
-            <div class="burbuja">
-                <div>
-                    <p class="kicker">Paso 4 de 6</p>
-                    <h2>Se anota la persona y el préstamo</h2>
-                    <p>Nombre y teléfono. Luego, cuánto se le entrega, el interés y cada cuánto paga. Esa plata sale de la caja de este cobro.</p>
-                    <div class="acciones">
-                        <a class="btn" href="#dia-cobrar">Siguiente</a>
-                        <a class="btn-linea" href="#dia-entrar">Atrás</a>
-                    </div>
-                </div>
-            </div>
-        </article>
+    <template id="vista-abono">
+        <header class="encabezado"><div><p class="kicker">Norte</p><h1>Abono anotado</h1></div></header>
+        <section class="panel">
+            <p>Saldo que sigue en Norte: <strong>$ 96.000</strong>.</p>
+            <p class="mini-mensaje">Hola Ana, registramos tu abono de $ 24.000. Saldo pendiente: $ 96.000.</p>
+        </section>
+    </template>
 
-        <article class="charla" id="dia-cobrar">
-            <div class="escenario">
-                <p class="mini-nota">El cliente pagó</p>
-                <div class="mini-cobro">
-                    <span>Abono de hoy</span>
-                    <strong>$ 24.000</strong>
-                    <p>Saldo que sigue: $ 96.000</p>
-                </div>
-                <div class="mini-mensaje">Hola Ana, registramos tu abono. Saldo pendiente: $ 96.000.</div>
+    <template id="vista-sur">
+        <header class="encabezado">
+            <div>
+                <p class="kicker">Cobro</p>
+                <h1>Sur</h1>
+                <p>Otra caja</p>
             </div>
-            <div class="burbuja">
-                <div>
-                    <p class="kicker">Paso 5 de 6</p>
-                    <h2>Cuando paga, se anota</h2>
-                    <p>El abono baja el saldo. Si el teléfono es de Colombia, queda armado un mensaje de WhatsApp para contarle cuánto debe y cuándo sigue.</p>
-                    <div class="acciones">
-                        <a class="btn" href="#dia-cerrar">Siguiente</a>
-                        <a class="btn-linea" href="#dia-prestar">Atrás</a>
-                    </div>
-                </div>
+            <div class="acciones">
+                <button class="btn-linea" type="button" data-ir="volver">Volver a los cobros</button>
             </div>
-        </article>
+        </header>
+        <section class="grid-cifras">
+            <article class="cifra"><span>En caja</span><strong>$ 200.000</strong></article>
+            <article class="cifra"><span>Cartera en la calle</span><strong>$ 0</strong></article>
+            <article class="cifra"><span>Para cobrar hoy</span><strong>$ 0</strong></article>
+        </section>
+        <section class="panel">
+            <h2>Ana no trae la deuda de Norte</h2>
+            <p>En Sur el saldo de Ana es cero y no se ve ese historial.</p>
+        </section>
+    </template>
 
-        <article class="charla" id="dia-cerrar">
-            <div class="escenario">
-                <p class="mini-nota">Cierre del día</p>
-                <div class="mini-par">
-                    <div class="mini-cobro">
-                        <span>Retirar</span>
-                        <strong>La ganancia</strong>
-                        <p>Mañana se sale con la misma base</p>
-                    </div>
-                    <div class="mini-cobro mini-otro">
-                        <span>Sumar</span>
-                        <strong>A la base</strong>
-                        <p>Mañana se sale con más plata</p>
-                    </div>
-                </div>
-            </div>
-            <div class="burbuja">
-                <div>
-                    <p class="kicker">Paso 6 de 6</p>
-                    <h2>Al final se cuenta la caja</h2>
-                    <p>Se revisa que la plata cuadre. La ganancia se puede retirar o dejar sumada para el día siguiente. Los gastos de la ruta también se anotan ahí.</p>
-                    <div class="respuestas">
-                        <a class="btn" href="#otro-debe">Ver el cliente que ya debe en otro cobro</a>
-                        <a class="btn" href="{{ $hoy }}">Ir a Hoy</a>
-                        <a class="btn-linea" href="#inicio">Volver al inicio</a>
-                    </div>
-                </div>
-            </div>
-        </article>
+    <template id="vista-clientes-sur">
+        <header class="encabezado"><div><p class="kicker">Sur</p><h1>Clientes</h1></div></header>
+        <section class="panel">
+            <p>Ana Pérez <span class="badge badge-pause">Restringido</span></p>
+            <p>Saldo en este cobro: <strong>$ 0</strong>. Aquí todavía no tiene préstamos.</p>
+            <button class="btn" type="button" data-ir="ana-sur">Abrir a Ana</button>
+        </section>
+    </template>
 
-        <article class="charla" id="roles">
-            <div class="escenario">
-                <div class="mini-rol">
-                    <span class="badge badge-plan">Administrador</span>
-                    <p>Abre cobros, arma el equipo y aprueba.</p>
-                </div>
-                <div class="mini-rol">
-                    <span class="badge badge-pause">Cobrador</span>
-                    <p>Cobra, presta y anota en su ruta.</p>
-                </div>
-                <div class="mini-rol">
-                    <span class="badge badge-wait">Consulta</span>
-                    <p>Solo mira. No cambia nada.</p>
-                </div>
-            </div>
-            <div class="burbuja">
-                <div>
-                    <p class="kicker">El equipo</p>
-                    <h2>Quién puede hacer qué</h2>
-                    <p>El administrador ve los cobros, abre varios y es quien aprueba un préstamo si la persona ya debe en otro. El cobrador trabaja su ruta: cobra y presta, y no aprueba ese caso. Consulta entra a mirar, sin cobrar ni prestar.</p>
-                    <div class="respuestas">
-                        <a class="btn" href="#dia-caja">Ver un día de cobro</a>
-                        <a class="btn" href="#otro-debe">Ver el cliente restringido</a>
-                        <a class="btn-linea" href="#inicio">Volver al inicio</a>
-                    </div>
-                </div>
-            </div>
-        </article>
+    <template id="vista-restringido">
+        <header class="encabezado"><div><p class="kicker">Sur</p><h1>Ana Pérez</h1></div></header>
+        <section class="panel">
+            <p><span class="badge badge-pause">Restringido</span></p>
+            <p>Ya debe en Norte. Un cobrador no puede prestarle en Sur. El administrador aprueba al crear el préstamo nuevo.</p>
+            <button class="btn" type="button" data-ir="aprobar">Aprobar, como administrador, un préstamo de $ 10.000</button>
+        </section>
+    </template>
 
-        <article class="charla" id="otro-debe">
-            <div class="escenario">
-                <p class="mini-nota">Cobro Norte</p>
-                <div class="mini-persona">
-                    <strong>Ana Pérez</strong>
-                    <p>Préstamo abierto en este cobro</p>
-                </div>
-                <div class="mini-cobro">
-                    <span>Saldo en Norte</span>
-                    <strong>$ 120.000</strong>
-                </div>
-            </div>
-            <div class="burbuja">
-                <div>
-                    <p class="kicker">Paso 1 de 3</p>
-                    <h2>Ana ya debe en Norte</h2>
-                    <p>Ese préstamo, ese saldo y esa historia son de Norte. Si mañana se abre otro cobro, Norte sigue con lo suyo.</p>
-                    <div class="acciones">
-                        <a class="btn" href="#otro-limpio">Siguiente</a>
-                        <a class="btn-linea" href="#inicio">Elegir otro caso</a>
-                    </div>
-                </div>
-            </div>
-        </article>
+    <template id="vista-aprobado">
+        <header class="encabezado"><div><p class="kicker">Sur</p><h1>Préstamo nuevo</h1></div></header>
+        <section class="panel">
+            <p>En Sur solo se ve este préstamo: <strong>$ 10.000</strong>.</p>
+            <p>Norte sigue con sus $ 96.000. No se mezclan.</p>
+        </section>
+    </template>
 
-        <article class="charla" id="otro-limpio">
-            <div class="escenario">
-                <p class="mini-nota">Cobro Sur, el mismo cliente</p>
-                <div class="mini-persona">
-                    <strong>Ana Pérez</strong>
-                    <span class="badge badge-pause">Restringido</span>
-                </div>
-                <div class="mini-cobro mini-otro">
-                    <span>Saldo en Sur</span>
-                    <strong>$ 0</strong>
-                    <p>Aquí todavía no tiene préstamos</p>
-                </div>
+    <template id="vista-cierre">
+        <header class="encabezado"><div><p class="kicker">Cuadre</p><h1>Cierre del día</h1></div></header>
+        <section class="panel">
+            <p>La plata del cobro se cuenta. La ganancia se puede retirar o sumar a la base de mañana.</p>
+            <div class="acciones">
+                <button class="btn" type="button" data-ir="cerrar">Retirar la ganancia</button>
+                <button class="btn" type="button" data-ir="cerrar">Sumar a la base</button>
             </div>
-            <div class="burbuja">
-                <div>
-                    <p class="kicker">Paso 2 de 3</p>
-                    <h2>En el cobro nuevo aparece limpia</h2>
-                    <p>Ana sí sale en la lista de Sur. Su saldo aquí es cero y no se ve el historial de Norte. La marca Restringido avisa que ya debe en otro cobro.</p>
-                    <div class="acciones">
-                        <a class="btn" href="#otro-aprueba">Siguiente</a>
-                        <a class="btn-linea" href="#otro-debe">Atrás</a>
-                    </div>
-                </div>
-            </div>
-        </article>
+        </section>
+    </template>
 
-        <article class="charla" id="otro-aprueba">
-            <div class="escenario">
-                <div class="mini-par">
-                    <div class="mini-rol">
-                        <span class="badge badge-pause">Cobrador</span>
-                        <p>No puede prestarle en Sur.</p>
-                    </div>
-                    <div class="mini-rol">
-                        <span class="badge badge-plan">Administrador</span>
-                        <p>Al crear el préstamo, lo aprueba.</p>
-                    </div>
-                </div>
-                <div class="mini-cobro mini-otro">
-                    <span>Lo que se ve en Sur después</span>
-                    <strong>$ 10.000</strong>
-                    <p>Solo el préstamo nuevo</p>
-                </div>
+    <template id="vista-final">
+        <header class="encabezado">
+            <div>
+                <p class="kicker">Fin de la visita</p>
+                <h1>Así se usa Cobros</h1>
+                <p>Cada cobro es su caja. El cliente que ya debe en otro aparece restringido hasta que el administrador aprueba el préstamo nuevo.</p>
             </div>
-            <div class="burbuja">
-                <div>
-                    <p class="kicker">Paso 3 de 3</p>
-                    <h2>El administrador aprueba con el préstamo</h2>
-                    <p>El cobrador encuentra a Ana restringida y no puede prestarle en Sur. El administrador sí puede. Ese préstamo nuevo es la aprobación. En Sur solo se ve lo de Sur. Norte conserva sus $ 120.000.</p>
-                    <div class="respuestas">
-                        <a class="btn" href="{{ $hoy }}">Ir a Hoy</a>
-                        <a class="btn" href="#celular">Ver el celular</a>
-                        <a class="btn-linea" href="#inicio">Volver al inicio</a>
-                    </div>
-                </div>
-            </div>
-        </article>
-
-        <article class="charla" id="celular">
-            <div class="escenario">
-                <div class="mini-telefono">
-                    <p class="mini-nota">Hoy</p>
-                    <div class="mini-fila">
-                        <strong>Ruta centro</strong>
-                        <span class="mini-entrar">Entrar</span>
-                    </div>
-                    <p>La misma cuenta, en la calle.</p>
-                </div>
-            </div>
-            <div class="burbuja">
-                <div>
-                    <p class="kicker">En el teléfono</p>
-                    <h2>La misma ruta, en el celular</h2>
-                    <p>Se entra con el mismo correo. Lo que se cobra o se presta queda en el mismo cobro. La primera vez se pega la dirección de la empresa y, de ahí en adelante, abre en Hoy.</p>
-                    <div class="respuestas">
-                        <a class="btn" href="{{ $celular }}">Ver cómo se configura</a>
-                        <a class="btn" href="#dia-caja">Ver un día de cobro</a>
-                        <a class="btn-linea" href="#inicio">Volver al inicio</a>
-                    </div>
-                </div>
-            </div>
-        </article>
-    </div>
+        </header>
+        <section class="panel" id="alta">
+            <h2>Crear mi cobro en versión demo</h2>
+            <p class="ayuda">30 días y {{ \App\Models\Empresa::LIMITE_DEMO }} préstamos. Al crearlo quedas en el ingreso de tu empresa, para guardarlo en el celular.</p>
+            <form method="post" action="{{ route('registrar.store') }}">
+                @csrf
+                <input type="hidden" name="origen" value="guia">
+                <label>Empresa
+                    <input name="nombre" value="{{ old('nombre') }}" required>
+                </label>
+                <label>Administrador
+                    <input name="usuario_nombre" value="{{ old('usuario_nombre') }}" required>
+                </label>
+                <label>Correo
+                    <input type="email" name="usuario_email" value="{{ old('usuario_email') }}" autocomplete="username" required>
+                </label>
+                <label>Contraseña
+                    <input type="password" name="usuario_password" autocomplete="new-password" required>
+                </label>
+                <label>Confirmar contraseña
+                    <input type="password" name="usuario_password_confirmation" autocomplete="new-password" required>
+                </label>
+                <button class="btn" type="submit">Crear mi cobro en demo</button>
+            </form>
+        </section>
+    </template>
 @endsection
 
 @push('scripts')
     <script>
-        function enfocarGuia() {
-            var id = location.hash.replace('#', '') || 'inicio';
-            var escena = document.getElementById(id) || document.getElementById('inicio');
-            var titulo = escena && escena.querySelector('h2');
-            if (!titulo) return;
-            titulo.setAttribute('tabindex', '-1');
-            titulo.focus({ preventScroll: true });
-            escena.scrollIntoView({ block: 'nearest' });
+        var pasos = [
+            { vista: 'hoy', menu: null, cobro: '', espera: 'entrar-norte', texto: 'Esto es Hoy. Solo ves el nombre de cada cobro, sin cifras. Toca Entrar en Norte.' },
+            { vista: 'norte', menu: 'hoy', cobro: 'Norte', espera: 'clientes', texto: 'Ya entraste a Norte. El menú y las cifras son solo de este cobro. Toca Clientes.' },
+            { vista: 'clientes-norte', menu: 'clientes', cobro: 'Norte', espera: 'ana', texto: 'Ana debe 120.000 en Norte. Ábrela.' },
+            { vista: 'ana', menu: 'clientes', cobro: 'Norte', espera: 'abonar', texto: 'Este préstamo es de Norte. Cuando paga, anotas el abono.' },
+            { vista: 'abono', menu: 'clientes', cobro: 'Norte', espera: 'volver', texto: 'El saldo bajó y el mensaje de WhatsApp quedó listo. Vuelve a los cobros.' },
+            { vista: 'hoy', menu: null, cobro: '', espera: 'entrar-sur', texto: 'Ahora entra a Sur. Ana no debe aparecer con la deuda de Norte.' },
+            { vista: 'sur', menu: 'hoy', cobro: 'Sur', espera: 'clientes', texto: 'Sur tiene su propia caja, en cero para Ana. Toca Clientes.' },
+            { vista: 'clientes-sur', menu: 'clientes', cobro: 'Sur', espera: 'ana-sur', texto: 'Ana sale con la marca Restringido y saldo en cero. Ábrela.' },
+            { vista: 'restringido', menu: 'prestamo', cobro: 'Sur', espera: 'aprobar', texto: 'Un cobrador no puede prestarle aquí. El administrador sí: al crear el préstamo lo aprueba.' },
+            { vista: 'aprobado', menu: 'prestamo', cobro: 'Sur', espera: 'cuadre', texto: 'En Sur solo se ve el préstamo nuevo. Toca Cuadre para cerrar el día.' },
+            { vista: 'cierre', menu: 'cuadre', cobro: 'Sur', espera: 'cerrar', texto: 'Al final se cuenta la caja. Elige si retiras la ganancia o la sumas a mañana.' },
+            { vista: 'final', menu: null, cobro: '', espera: '', texto: 'Terminó la visita. Si quieres el tuyo de verdad, créalo en demo. Quedarás en el ingreso de tu empresa.' }
+        ];
+
+        var indice = 0;
+        var correoVisita = '';
+        var programa = document.getElementById('programa');
+        var puerta = document.getElementById('puerta');
+        var pantalla = document.getElementById('pantalla');
+        var conErrores = {{ $errors->any() ? 'true' : 'false' }};
+
+        function vista(nombre) {
+            var molde = document.getElementById('vista-' + nombre);
+            pantalla.replaceChildren(molde.content.cloneNode(true));
+            pantalla.querySelectorAll('[data-ir]').forEach(function (boton) {
+                boton.addEventListener('click', function () { intentar(boton.getAttribute('data-ir')); });
+            });
         }
-        window.addEventListener('hashchange', enfocarGuia);
-        if (location.hash) enfocarGuia();
+
+        function menu(paso) {
+            var dentro = paso.cobro !== '';
+            document.getElementById('cobro-activo').hidden = !dentro;
+            document.getElementById('cobro-activo').textContent = paso.cobro;
+            document.querySelectorAll('#menu [data-menu]').forEach(function (boton) {
+                var esHoy = boton.getAttribute('data-menu') === 'hoy';
+                boton.hidden = esHoy ? false : !dentro;
+                boton.classList.toggle('activo', boton.getAttribute('data-menu') === paso.menu || (esHoy && paso.vista === 'hoy'));
+            });
+        }
+
+        function pintar() {
+            var paso = pasos[indice];
+            vista(paso.vista);
+            menu(paso);
+            document.getElementById('coach-paso').textContent = 'Paso ' + (indice + 1) + ' de ' + pasos.length;
+            document.getElementById('coach-texto').textContent = paso.texto;
+        }
+
+        function intentar(accion) {
+            var paso = pasos[indice];
+            if (accion !== paso.espera) {
+                document.getElementById('coach-texto').textContent = 'Sigue este paso. ' + paso.texto;
+                return;
+            }
+            if (indice < pasos.length - 1) {
+                indice += 1;
+                pintar();
+            }
+        }
+
+        function entrarVisita(correo) {
+            correoVisita = correo;
+            document.getElementById('sesion-correo').textContent = correo;
+            puerta.hidden = true;
+            programa.hidden = false;
+            document.querySelector('.guia-publica').classList.add('visita-activa');
+            indice = 0;
+            pintar();
+        }
+
+        document.getElementById('puerta-form').addEventListener('submit', function (evento) {
+            evento.preventDefault();
+            entrarVisita(document.getElementById('correo').value.trim());
+        });
+
+        document.getElementById('salir').addEventListener('click', function () {
+            programa.hidden = true;
+            puerta.hidden = false;
+            document.querySelector('.guia-publica').classList.remove('visita-activa');
+        });
+
+        document.querySelectorAll('#menu [data-ir]').forEach(function (boton) {
+            boton.addEventListener('click', function () { intentar(boton.getAttribute('data-ir')); });
+        });
+
+        if (conErrores) {
+            entrarVisita('visita@correo.com');
+            indice = pasos.length - 1;
+            pintar();
+        }
     </script>
 @endpush

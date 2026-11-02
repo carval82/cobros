@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../servicios/cobros_api.dart';
 import '../servicios/sesion_local.dart';
+import '../servicios/ubicacion.dart';
 import 'inicio.dart';
 
 class Entrada extends StatefulWidget {
@@ -14,15 +15,11 @@ class Entrada extends StatefulWidget {
 
 class _EntradaState extends State<Entrada> {
   final _servidor = TextEditingController(text: 'https://cobros-production-4dda.up.railway.app');
-  final _empresa = TextEditingController();
-  final _administrador = TextEditingController();
   final _direccion = TextEditingController();
   final _correo = TextEditingController();
   final _clave = TextEditingController();
-  final _confirmar = TextEditingController();
   String? _error;
   bool _ocupado = false;
-  bool _crear = true;
 
   @override
   void initState() {
@@ -39,20 +36,14 @@ class _EntradaState extends State<Entrada> {
     if (servidor != null && servidor.isNotEmpty) _servidor.text = servidor;
     if (direccion != null) _direccion.text = direccion;
     if (correo != null) _correo.text = correo;
-    if ((direccion != null && direccion.isNotEmpty) || (correo != null && correo.isNotEmpty)) {
-      setState(() => _crear = false);
-    }
   }
 
   @override
   void dispose() {
     _servidor.dispose();
-    _empresa.dispose();
-    _administrador.dispose();
     _direccion.dispose();
     _correo.dispose();
     _clave.dispose();
-    _confirmar.dispose();
     super.dispose();
   }
 
@@ -73,36 +64,6 @@ class _EntradaState extends State<Entrada> {
     await Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => Inicio(api: api)),
     );
-  }
-
-  Future<void> _crearEmpresa() async {
-    final aviso = _avisoServidor();
-    if (aviso != null) {
-      setState(() => _error = aviso);
-      return;
-    }
-    if (_clave.text != _confirmar.text) {
-      setState(() => _error = 'La confirmación no coincide.');
-      return;
-    }
-    setState(() {
-      _ocupado = true;
-      _error = null;
-    });
-    try {
-      final api = CobrosApi(_raiz);
-      await api.crearEmpresa(
-        empresa: _empresa.text.trim(),
-        administrador: _administrador.text.trim(),
-        correo: _correo.text.trim(),
-        clave: _clave.text,
-      );
-      await _abrir(api);
-    } catch (e) {
-      if (mounted) setState(() => _error = '$e'.replaceFirst('Exception: ', ''));
-    } finally {
-      if (mounted) setState(() => _ocupado = false);
-    }
   }
 
   Future<void> _entrar() async {
@@ -154,33 +115,22 @@ class _EntradaState extends State<Entrada> {
             ),
             const SizedBox(height: 16),
             Text(
-              _crear ? 'Crea tu empresa' : 'Entra a tu empresa',
+              'Entra a tu empresa',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 8),
-            Text(
-              _crear
-                  ? 'Se abre su base, se compone la dirección /tenant/ y quedas como administrador.'
-                  : 'Pega la dirección que se generó, o entra solo con el correo si ya la guardamos.',
-            ),
+            const Text('Pega la dirección de ingreso que quedó al crear el cobro. Si aún no tienes empresa, ábrela en la guía.'),
             const SizedBox(height: 20),
             TextField(
               controller: _servidor,
               decoration: const InputDecoration(labelText: 'Servidor'),
               keyboardType: TextInputType.url,
             ),
-            if (_crear) ...[
-              const SizedBox(height: 12),
-              TextField(controller: _empresa, decoration: const InputDecoration(labelText: 'Empresa')),
-              const SizedBox(height: 12),
-              TextField(controller: _administrador, decoration: const InputDecoration(labelText: 'Administrador')),
-            ] else ...[
-              const SizedBox(height: 12),
-              TextField(
-                controller: _direccion,
-                decoration: const InputDecoration(labelText: 'Dirección del tenant'),
-              ),
-            ],
+            const SizedBox(height: 12),
+            TextField(
+              controller: _direccion,
+              decoration: const InputDecoration(labelText: 'Dirección de ingreso'),
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: _correo,
@@ -193,27 +143,14 @@ class _EntradaState extends State<Entrada> {
               decoration: const InputDecoration(labelText: 'Clave'),
               obscureText: true,
             ),
-            if (_crear) ...[
-              const SizedBox(height: 12),
-              TextField(
-                controller: _confirmar,
-                decoration: const InputDecoration(labelText: 'Confirmar clave'),
-                obscureText: true,
-              ),
-            ],
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: _ocupado ? null : (_crear ? _crearEmpresa : _entrar),
-              child: Text(_crear ? 'Crear empresa' : 'Entrar'),
+              onPressed: _ocupado ? null : _entrar,
+              child: const Text('Entrar'),
             ),
             TextButton(
-              onPressed: _ocupado
-                  ? null
-                  : () => setState(() {
-                        _crear = !_crear;
-                        _error = null;
-                      }),
-              child: Text(_crear ? 'Ya tengo empresa' : 'Crear una empresa'),
+              onPressed: _ocupado ? null : () => abrirEnlace('${_raiz}/guia'),
+              child: const Text('Aún no tengo empresa'),
             ),
             if (_error != null)
               Text(_error!, style: const TextStyle(color: Color(0xFFA32632))),
