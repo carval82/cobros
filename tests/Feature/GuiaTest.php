@@ -25,7 +25,12 @@ class GuiaTest extends TestCase
             ->assertSee('Cuotas de hoy')
             ->assertSee('Restringido')
             ->assertSee('Retirar la ganancia')
+            ->assertSee('Ordenar desde aquí')
+            ->assertSee('Cobradores en vivo')
+            ->assertSee('A pagar en comisión')
+            ->assertSee('cada 25 segundos')
             ->assertSee('Crear mi cobro en demo')
+            ->assertSee('Volver a empezar')
             ->assertDontSee('caja_cobro');
 
         $this->get('/login')

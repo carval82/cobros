@@ -35,10 +35,14 @@
                     <button type="button" data-ir="atrasados" data-menu="atrasados" hidden>Atrasados</button>
                     <button type="button" data-ir="clientes" data-menu="clientes" hidden>Clientes</button>
                     <button type="button" data-ir="prestamo" data-menu="prestamo" hidden>Nuevo préstamo</button>
+                    <button type="button" data-ir="rendimiento" data-menu="rendimiento" data-libre>Rendimiento</button>
+                    <button type="button" data-ir="vivo" data-menu="vivo" data-libre>En vivo</button>
+                    <button type="button" data-ir="app" data-menu="app" data-libre>App del celular</button>
                 </nav>
                 <div class="sesion">
                     <p id="sesion-correo">Visita</p>
                     <p>Visita guiada</p>
+                    <button class="salir reiniciar" type="button">Volver a empezar</button>
                     <button class="salir" type="button" id="salir">Salir de la visita</button>
                 </div>
             </aside>
@@ -48,6 +52,7 @@
                 <div class="coach" id="coach">
                     <p class="kicker" id="coach-paso"></p>
                     <p id="coach-texto"></p>
+                    <button class="reiniciar" type="button">Volver a empezar</button>
                 </div>
             </main>
         </div>
@@ -168,7 +173,7 @@
 
     <template id="vista-pagado">
         <p class="aviso aviso-ok">Abono registrado. El saldo ya se puede mandar al cliente.</p>
-        <p class="aviso aviso-ok">Hola Ana, registramos tu abono de $ 24.000. Saldo pendiente: $ 96.000. Próxima cuota en 7 días por $ 24.000. <button class="btn" type="button">Enviar por WhatsApp</button></p>
+        <p class="aviso aviso-ok">Hola Ana, registramos tu abono de $ 24.000. Saldo pendiente: $ 96.000. Próxima cuota en 7 días por $ 24.000. <button class="btn" type="button" data-ir="whatsapp">Enviar por WhatsApp</button></p>
         <header class="encabezado">
             <div>
                 <h1>Ana Pérez</h1>
@@ -226,21 +231,43 @@
     <template id="vista-ruta">
         <header class="encabezado">
             <div>
-                <h1>Ruta</h1>
-                <p>Paradas de hoy y atrasadas, desde donde estás.</p>
+                <h1>Ruta de cobro</h1>
+                <p>Paradas de hoy y atrasadas, ordenadas por cercanía. El punto del cliente se guarda al registrar el abono en el celular.</p>
+            </div>
+            <div class="acciones">
+                <button class="btn" type="button" data-ir="ruta">Ordenar desde aquí</button>
+                <button class="btn-linea" type="button" data-ir="ruta">Abrir en Google Maps</button>
             </div>
         </header>
+        <section class="grid-cifras">
+            <article class="cifra"><span>Paradas</span><strong>2</strong></article>
+            <article class="cifra"><span>En el mapa</span><strong>2</strong></article>
+            <article class="cifra"><span>Sin GPS</span><strong>0</strong></article>
+            <article class="cifra"><span>Por cobrar</span><strong>$ 24.000</strong></article>
+        </section>
+        <div class="mapa mapa-visita" aria-hidden="true">
+            <span class="pin pin-tu" style="left:24%;top:72%">Tú · Pedro</span>
+            <span class="pin" style="left:46%;top:42%">1 · Luis · 400 m</span>
+            <span class="pin" style="left:70%;top:58%">2 · Ana · 1,2 km</span>
+        </div>
         <section class="panel">
-            <article class="parada" style="display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center;margin-bottom:14px">
-                <strong>1</strong>
-                <div><strong>Luis Mora</strong><div class="muted">Calle 12 · 2 días de atraso · $ 24.000</div></div>
-                <span class="badge badge-danger">Atrasada</span>
+            <article class="parada">
+                <span class="parada-orden">1</span>
+                <div>
+                    <strong>Luis Mora</strong>
+                    <div class="muted">Calle 12 · 400 m · 2 días de atraso · $ 24.000</div>
+                </div>
+                <button class="btn-linea" type="button" data-ir="ruta">Ir</button>
             </article>
-            <article class="parada" style="display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center">
-                <strong>2</strong>
-                <div><strong>Ana Pérez</strong><div class="muted">Carrera 8 · cuota pagada hoy</div></div>
-                <span class="badge badge-done">Pagada</span>
+            <article class="parada">
+                <span class="parada-orden">2</span>
+                <div>
+                    <strong>Ana Pérez</strong>
+                    <div class="muted">Carrera 8 · 1,2 km · el abono de hoy dejó su punto</div>
+                </div>
+                <button class="btn-linea" type="button" data-ir="ruta">Ir</button>
             </article>
+            <p class="ayuda">Quien no tiene GPS queda al final y se marca “sin GPS”. Ordenar desde aquí usa el lugar del teléfono, no una dirección escrita.</p>
             <p style="margin-top:16px"><button class="btn" type="button" data-ir="cuadre">Ir al cuadre</button></p>
         </section>
     </template>
@@ -400,7 +427,118 @@
                 <p class="ayuda">Los $ 96.000 de Norte siguen en Norte.</p>
             </section>
         </div>
-        <p><button class="btn" type="button" data-ir="fin">Terminar la visita</button></p>
+        <p><button class="btn" type="button" data-ir="app">Ver la app del celular</button></p>
+    </template>
+
+    <template id="vista-app">
+        <header class="encabezado">
+            <div>
+                <p class="kicker">En el teléfono</p>
+                <h1>La misma caja, en la calle</h1>
+                <p>El cobrador abre Cobras con la dirección de la empresa. No crea otra. El teléfono recuerda el servidor, esa dirección y el correo.</p>
+            </div>
+        </header>
+        <div class="dos">
+            <section class="panel telefono-visita">
+                <p class="kicker">Cobras · Norte</p>
+                <h2>Hoy</h2>
+                <p>En caja $ 524.000 · por cobrar hoy $ 24.000</p>
+                <p class="muted">Ana Pérez · cuota pagada · Luis Mora · atrasado</p>
+                <div class="pestanas"><span>Hoy</span><span>Clientes</span><span>Ruta</span><span>Más</span></div>
+            </section>
+            <section class="panel">
+                <h2>Para qué sirve llevarla</h2>
+                <ul class="historial">
+                    <li><time>Cobro</time><div>Registra el abono ahí mismo. El mensaje de WhatsApp queda listo, con el saldo nuevo.</div></li>
+                    <li><time>Cliente</time><div>Ese abono guarda la ubicación del cliente. La próxima ruta lo pone en el mapa y calcula la distancia.</div></li>
+                    <li><time>Ruta</time><div>Ordena las paradas desde donde está el cobrador y abre el camino en Google Maps.</div></li>
+                    <li><time>Equipo</time><div>Mientras la app sigue abierta, el administrador ve al cobrador en En vivo. En Más está el cuadre, el reporte y los cobradores en vivo.</div></li>
+                </ul>
+                <p><button class="btn" type="button" data-ir="vivo">Ver cobradores en vivo</button></p>
+            </section>
+        </div>
+    </template>
+
+    <template id="vista-vivo">
+        <header class="encabezado">
+            <div>
+                <p class="kicker">Equipo</p>
+                <h1>En vivo</h1>
+                <p>Dónde está cada cobrador mientras tiene Cobras abierto. Si cierra la app, queda la última posición.</p>
+            </div>
+        </header>
+        <div class="mapa mapa-visita" aria-hidden="true">
+            <span class="pin pin-tu" style="left:48%;top:54%">Pedro Ríos · Norte</span>
+        </div>
+        <section class="panel">
+            <h2>Cobradores</h2>
+            <div class="tabla-wrap"><table>
+                <thead><tr><th>Nombre</th><th>Estado</th><th>Última señal</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Pedro Ríos</strong><div class="muted">Cobrador · Norte</div></td>
+                        <td><span class="badge badge-ok">En ruta</span></td>
+                        <td>Hace un momento</td>
+                    </tr>
+                </tbody>
+            </table></div>
+            <p class="ayuda">El celular manda el punto solo, más o menos cada 25 segundos. Pedro no escribe nada. En la app el administrador lo abre en Más, en Cobradores en vivo.</p>
+            <p><button class="btn" type="button" data-ir="rendimiento">Ver el reporte</button></p>
+        </section>
+    </template>
+
+    <template id="vista-rendimiento">
+        <header class="encabezado">
+            <div>
+                <p class="kicker">Equipo</p>
+                <h1>Rendimiento</h1>
+                <p>Lo que cobró cada persona y el porcentaje que le corresponde.</p>
+            </div>
+        </header>
+        <form class="filtros filtros-fechas">
+            <label>Desde<input value="1 nov 2026" readonly></label>
+            <label>Hasta<input value="Hoy" readonly></label>
+            <button class="btn" type="button" data-ir="rendimiento">Ver periodo</button>
+        </form>
+        <section class="grid-cifras">
+            <article class="cifra"><span>Cobrado</span><strong>$ 24.000</strong></article>
+            <article class="cifra"><span>A pagar en comisión</span><strong>$ 2.400</strong></article>
+            <article class="cifra"><span>Abonos</span><strong>1</strong></article>
+        </section>
+        <section class="panel">
+            <h2>Cobradores</h2>
+            <div class="tabla-wrap"><table>
+                <thead><tr><th>Cobrador</th><th>% vigente</th><th>Abonos</th><th>Cobrado</th><th>Le corresponde</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>Pedro Ríos</td>
+                        <td>10%</td>
+                        <td>1</td>
+                        <td class="num">$ 24.000</td>
+                        <td class="num">$ 2.400</td>
+                    </tr>
+                </tbody>
+            </table></div>
+            <p class="ayuda">El porcentaje se define en Usuarios. Uno nuevo queda en 10 %. Cada abono guarda el porcentaje de ese momento: si mañana lo subes, el de Ana no cambia.</p>
+        </section>
+        <section class="panel">
+            <h2>Abonos del periodo</h2>
+            <div class="tabla-wrap"><table>
+                <thead><tr><th>Fecha</th><th>Cliente</th><th>Cobrador</th><th>Abono</th><th>%</th><th>Comisión</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>Hoy</td>
+                        <td>Ana Pérez</td>
+                        <td>Pedro Ríos</td>
+                        <td class="num">$ 24.000</td>
+                        <td>10%</td>
+                        <td class="num">$ 2.400</td>
+                    </tr>
+                </tbody>
+            </table></div>
+            <p class="ayuda">Pedro ve este mismo corte en la app, en Mi rendimiento, pero solo lo suyo. Consulta puede mirar la cartera y no registra abonos.</p>
+            <p><button class="btn" type="button" data-ir="fin">Terminar la visita</button></p>
+        </section>
     </template>
 
     <template id="vista-final">
@@ -408,7 +546,7 @@
             <div>
                 <p class="kicker">Fin de la visita</p>
                 <h1>Así se usa Cobros</h1>
-                <p>Cada cobro es su caja. El cliente que ya debe en otro aparece restringido hasta que el administrador aprueba el préstamo nuevo.</p>
+                <p>Cada cobro es su caja. El celular deja al cliente en el mapa, muestra dónde va el cobrador y liquida su porcentaje.</p>
             </div>
         </header>
         <section class="panel" id="alta">
@@ -446,15 +584,18 @@
             { vista: 'prestamo', menu: 'clientes', cobro: 'Norte', espera: 'abonar', texto: 'El préstamo trae el plan de cuotas. Registra el abono de 24.000, como en el programa.' },
             { vista: 'pagado', menu: 'clientes', cobro: 'Norte', espera: 'atrasados', texto: 'El saldo bajó a 96.000, la primera cuota quedó pagada y el WhatsApp ya está listo. Sigue a Atrasados.' },
             { vista: 'atrasados', menu: 'atrasados', cobro: 'Norte', espera: 'ruta', texto: 'Ana ya no sale vencida. Luis sigue con 2 días de atraso. Mira la ruta.' },
-            { vista: 'ruta', menu: 'ruta', cobro: 'Norte', espera: 'cuadre', texto: 'La ruta pone primero a quien debe. Ahora cuadra el día de Norte.' },
+            { vista: 'ruta', menu: 'ruta', cobro: 'Norte', espera: 'cuadre', texto: 'Luis queda primero: debe y está a 400 m. El abono de Ana guardó su punto. Quien no tiene GPS sale al final. Sigue al cuadre.' },
             { vista: 'cierre', menu: 'cuadre', cobro: 'Norte', espera: 'cerrar', texto: 'De lo cobrado, 4.000 son ganancia. Retírala o súmala a la base de mañana.' },
             { vista: 'hoy', menu: 'hoy', cobro: '', espera: 'entrar-sur', texto: 'Norte ya cuadró. Entra a Sur: es otra caja y Ana no debe traer ese saldo.' },
             { vista: 'sur', menu: 'hoy', cobro: 'Sur', espera: 'clientes', texto: 'Sur amanece en cero para Ana. El abono de Norte no está aquí. Abre Clientes.' },
             { vista: 'clientes-sur', menu: 'clientes', cobro: 'Sur', espera: 'ana-sur', texto: 'Ana aparece restringida y con saldo 0. Beto, que no debe en otro cobro, no lleva esa marca. Abre a Ana.' },
             { vista: 'restringido', menu: 'clientes', cobro: 'Sur', espera: 'aprobar', texto: 'No hay préstamos ni historial de Norte. Un cobrador no puede prestarle. El administrador sí aprueba.' },
             { vista: 'prestamo-nuevo', menu: 'prestamo', cobro: 'Sur', espera: 'crear', texto: 'El administrador usa el mismo formulario de préstamo. Crearlo es la aprobación.' },
-            { vista: 'aprobado', menu: 'prestamo', cobro: 'Sur', espera: 'fin', texto: 'En Sur solo quedó el préstamo de 10.000. Los 96.000 siguen en Norte.' },
-            { vista: 'final', menu: 'hoy', cobro: '', espera: '', texto: 'Así se trabaja un día: cobrar, ver atrasos, armar la ruta, cuadrar y cuidar cada cobro por separado.' }
+            { vista: 'aprobado', menu: 'prestamo', cobro: 'Sur', espera: 'app', texto: 'En Sur solo quedó el préstamo de 10.000. Los 96.000 siguen en Norte. Ahora mira qué hace el celular en la calle.' },
+            { vista: 'app', menu: 'app', cobro: '', espera: 'vivo', texto: 'La app es la misma caja: abono, WhatsApp, ruta y cuadre. Además comparte dónde va el cobrador y deja al cliente en el mapa. Ábrelo en En vivo.' },
+            { vista: 'vivo', menu: 'vivo', cobro: '', espera: 'rendimiento', texto: 'Pedro tiene Cobras abierto y el punto llega solo, cerca de cada 25 segundos. Si cierra la app, esta es la última señal. Sigue al reporte.' },
+            { vista: 'rendimiento', menu: 'rendimiento', cobro: '', espera: 'fin', texto: 'De los 24.000 de Ana, a Pedro le corresponden 2.400: el 10 % de ese abono. El cobrador ve lo suyo en Mi rendimiento.' },
+            { vista: 'final', menu: 'hoy', cobro: '', espera: '', texto: 'Así se trabaja un día: cobrar, ver atrasos, armar la ruta con el mapa, cuadrar, seguir al cobrador y liquidar su porcentaje.' }
         ];
 
         var indice = 0;
@@ -478,7 +619,8 @@
             document.getElementById('cobro-activo').textContent = paso.cobro;
             document.querySelectorAll('#menu [data-menu]').forEach(function (boton) {
                 var esHoy = boton.getAttribute('data-menu') === 'hoy';
-                boton.hidden = esHoy ? false : !dentro;
+                var libre = boton.hasAttribute('data-libre');
+                boton.hidden = (esHoy || libre) ? false : !dentro;
                 boton.classList.toggle('activo', boton.getAttribute('data-menu') === paso.menu || (esHoy && paso.vista === 'hoy'));
             });
         }
@@ -491,15 +633,47 @@
             document.getElementById('coach-texto').textContent = paso.texto;
         }
 
+        function destino(accion) {
+            if (accion === 'hoy' || accion === 'volver') {
+                return indice >= 7 ? 7 : 0;
+            }
+            var mapa = {
+                'entrar-norte': 1,
+                'ana': 2,
+                'abonar': 3,
+                'atrasados': 4,
+                'ruta': 5,
+                'cuadre': 6,
+                'cerrar': 7,
+                'entrar-sur': 8,
+                'clientes': 9,
+                'ana-sur': 10,
+                'aprobar': 11,
+                'prestamo': 11,
+                'crear': 12,
+                'app': 13,
+                'vivo': 14,
+                'rendimiento': 15,
+                'fin': 16
+            };
+            return Object.prototype.hasOwnProperty.call(mapa, accion) ? mapa[accion] : -1;
+        }
+
         function intentar(accion) {
-            var paso = pasos[indice];
-            if (accion !== paso.espera) {
-                document.getElementById('coach-texto').textContent = 'Sigue este paso. ' + paso.texto;
+            if (accion === 'whatsapp') {
+                document.getElementById('coach-texto').textContent = 'En la visita ese WhatsApp no se envía. Elige otro botón o vuelve a empezar.';
                 return;
             }
-            if (indice < pasos.length - 1) {
-                indice += 1;
-                pintar();
+            var ir = destino(accion);
+            if (ir < 0) {
+                return;
+            }
+            var siguio = accion === pasos[indice].espera;
+            var mismo = ir === indice;
+            indice = ir;
+            pintar();
+            if (!siguio && !mismo) {
+                document.getElementById('coach-texto').textContent = pasos[indice].texto + ' Puedes seguir desde aquí o volver a empezar.';
             }
         }
 
@@ -522,6 +696,13 @@
             programa.hidden = true;
             puerta.hidden = false;
             document.querySelector('.guia-publica').classList.remove('visita-activa');
+        });
+
+        document.querySelectorAll('.reiniciar').forEach(function (boton) {
+            boton.addEventListener('click', function () {
+                indice = 0;
+                pintar();
+            });
         });
 
         document.querySelectorAll('#menu [data-ir]').forEach(function (boton) {
