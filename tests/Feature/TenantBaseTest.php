@@ -86,6 +86,10 @@ class TenantBaseTest extends TestCase
             'email' => 'ana@norte.test',
             'password' => 'secreto12',
         ])->assertSessionHasErrors('email');
+        $this->assertSame(
+            'El correo o la contraseña no coinciden.',
+            session('errors')->first('email')
+        );
 
         $this->post('/tenant/'.$norte->uuid.'/login', [
             'email' => 'ana@norte.test',

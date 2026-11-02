@@ -8,6 +8,8 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -55,24 +57,13 @@ class LoginController extends Controller
             return $this->despuesDeEntrar($request);
         }
 
-        $datos = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required', 'string'],
-        ], [
-            'email.required' => 'Escribe el correo.',
-            'email.email' => 'Ese correo no es válido.',
-            'password.required' => 'Escribe la contraseña.',
-        ]);
+        $datos = $this->credenciales($request);
 
-        if (! Auth::attempt(
-            ['email' => $datos['email'], 'password' => $datos['password']],
-            $request->boolean('recordar')
-        )) {
-            throw ValidationException::withMessages([
-                'email' => 'El correo o la contraseña no coinciden.',
-            ]);
+        if (! $this->intentar($request, $datos['email'], $datos['password'])) {
+            $this->fallo($request, $datos['email']);
         }
 
+        $this->limpiarIntentos($request, $datos['email']);
         $request->session()->regenerate();
 
         return $this->despuesDeEntrar($request);
@@ -80,34 +71,22 @@ class LoginController extends Controller
 
     private function entrarEnEmpresa(Request $request, Empresa $empresa): RedirectResponse
     {
-        $datos = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required', 'string'],
-        ], [
-            'email.required' => 'Escribe el correo.',
-            'email.email' => 'Ese correo no es válido.',
-            'password.required' => 'Escribe la contraseña.',
-        ]);
+        $datos = $this->credenciales($request);
 
-        if (! Auth::attempt(
-            ['email' => $datos['email'], 'password' => $datos['password']],
-            $request->boolean('recordar')
-        )) {
-            throw ValidationException::withMessages([
-                'email' => 'El correo o la contraseña no coinciden.',
-            ]);
+        if (! $this->intentar($request, $datos['email'], $datos['password'])) {
+            $this->fallo($request, $datos['email']);
         }
 
         $usuario = $request->user();
 
         if (! $usuario->es_maestro && (int) $usuario->empresa_id !== (int) $empresa->id) {
             Auth::logout();
-
-            throw ValidationException::withMessages([
-                'email' => 'Esta cuenta no pertenece a '.$empresa->nombre.'.',
-            ]);
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            $this->fallo($request, $datos['email']);
         }
 
+        $this->limpiarIntentos($request, $datos['email']);
         $request->session()->regenerate();
 
         return redirect()->to(cobro_route('dashboard'));
@@ -130,6 +109,65 @@ class LoginController extends Controller
         }
 
         return redirect()->intended(route('dashboard'));
+    }
+
+    /**
+     * @return array{email: string, password: string}
+     */
+    private function credenciales(Request $request): array
+    {
+        $datos = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string'],
+        ], [
+            'email.required' => 'Escribe el correo.',
+            'email.email' => 'Ese correo no es válido.',
+            'password.required' => 'Escribe la contraseña.',
+        ]);
+
+        $this->frenarIntentos($request, $datos['email']);
+
+        return $datos;
+    }
+
+    private function intentar(Request $request, string $email, string $password): bool
+    {
+        return Auth::attempt(
+            ['email' => $email, 'password' => $password],
+            $request->boolean('recordar')
+        );
+    }
+
+    private function frenarIntentos(Request $request, string $email): void
+    {
+        $clave = $this->claveIntentos($request, $email);
+
+        if (! RateLimiter::tooManyAttempts($clave, 5)) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'email' => 'Demasiados intentos. Espera '.RateLimiter::availableIn($clave).' segundos.',
+        ]);
+    }
+
+    private function fallo(Request $request, string $email): never
+    {
+        RateLimiter::hit($this->claveIntentos($request, $email), 900);
+
+        throw ValidationException::withMessages([
+            'email' => 'El correo o la contraseña no coinciden.',
+        ]);
+    }
+
+    private function limpiarIntentos(Request $request, string $email): void
+    {
+        RateLimiter::clear($this->claveIntentos($request, $email));
+    }
+
+    private function claveIntentos(Request $request, string $email): string
+    {
+        return 'ingreso|'.Str::lower($email).'|'.$request->ip();
     }
 
     public function destroy(Request $request): RedirectResponse

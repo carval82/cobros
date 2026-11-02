@@ -58,6 +58,15 @@ class _EntradaState extends State<Entrada> {
 
   String get _raiz => _servidor.text.trim().replaceAll(RegExp(r'/+$'), '');
 
+  String? _avisoServidor() {
+    final uri = Uri.tryParse(_raiz);
+    if (uri == null || uri.host.isEmpty) return 'Escribe la dirección del servidor.';
+    if (uri.scheme == 'https') return null;
+    const locales = {'localhost', '127.0.0.1', '10.0.2.2'};
+    if (uri.scheme == 'http' && locales.contains(uri.host)) return null;
+    return 'El servidor tiene que usar https.';
+  }
+
   Future<void> _abrir(CobrosApi api) async {
     await guardarConfiguracion(api, correo: _correo.text);
     if (!mounted) return;
@@ -67,6 +76,11 @@ class _EntradaState extends State<Entrada> {
   }
 
   Future<void> _crearEmpresa() async {
+    final aviso = _avisoServidor();
+    if (aviso != null) {
+      setState(() => _error = aviso);
+      return;
+    }
     if (_clave.text != _confirmar.text) {
       setState(() => _error = 'La confirmación no coincide.');
       return;
@@ -92,6 +106,11 @@ class _EntradaState extends State<Entrada> {
   }
 
   Future<void> _entrar() async {
+    final aviso = _avisoServidor();
+    if (aviso != null) {
+      setState(() => _error = aviso);
+      return;
+    }
     setState(() {
       _ocupado = true;
       _error = null;

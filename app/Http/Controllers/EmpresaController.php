@@ -113,9 +113,10 @@ class EmpresaController extends Controller
             );
         } catch (\Throwable $e) {
             $empresa->delete();
+            report($e);
 
             return back()
-                ->withErrors(['nombre' => 'No se pudo crear la base de la empresa: '.$e->getMessage()])
+                ->withErrors(['nombre' => 'No se pudo crear la base de la empresa.'])
                 ->withInput();
         }
 

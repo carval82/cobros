@@ -63,10 +63,16 @@ class LicenciaAdminController extends Controller
                 ->withInput();
         }
 
+        try {
+            $codigo = ActivacionLicencia::generar($solicitud, $datos['plan'], (int) $datos['dias']);
+        } catch (\RuntimeException) {
+            return back()->withErrors(['solicitud' => 'La activación no está configurada en el servidor.'])->withInput();
+        }
+
         return back()->with('clave', [
             'empresa' => null,
             'solicitud' => $solicitud,
-            'codigo' => ActivacionLicencia::generar($solicitud, $datos['plan'], (int) $datos['dias']),
+            'codigo' => $codigo,
             'plan' => $datos['plan'],
             'dias' => (int) $datos['dias'],
         ])->with('ok', 'Clave generada.');
@@ -80,7 +86,11 @@ class LicenciaAdminController extends Controller
         $datos = $this->validar($request);
         $plan = $datos['plan'];
         $dias = (int) $datos['dias'];
-        $codigo = ActivacionLicencia::generar((string) $empresa->codigo_solicitud, $plan, $dias);
+        try {
+            $codigo = ActivacionLicencia::generar((string) $empresa->codigo_solicitud, $plan, $dias);
+        } catch (\RuntimeException) {
+            return back()->withErrors(['solicitud' => 'La activación no está configurada en el servidor.'])->withInput();
+        }
 
         if ($request->input('modo') === 'activar') {
             $empresa->update([

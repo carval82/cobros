@@ -82,12 +82,14 @@ Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')-
 
 Route::middleware('auth')->group(function () use ($cartera) {
     Route::get('/empresas', [EmpresaController::class, 'index'])->name('empresas.index');
-    Route::post('/empresas', [EmpresaController::class, 'store'])->name('empresas.store');
-    Route::post('/empresas/{empresa}/entrar', [EmpresaController::class, 'entrar'])->name('empresas.entrar');
-    Route::post('/empresas/salir', [EmpresaController::class, 'salir'])->name('empresas.salir');
-    Route::get('/licencias', [LicenciaAdminController::class, 'index'])->name('licencias.index');
-    Route::post('/licencias/generar', [LicenciaAdminController::class, 'generar'])->name('licencias.generar');
-    Route::post('/licencias/{empresa}', [LicenciaAdminController::class, 'aplicar'])->name('licencias.aplicar');
+    Route::middleware('maestro')->group(function () {
+        Route::post('/empresas', [EmpresaController::class, 'store'])->name('empresas.store');
+        Route::post('/empresas/{empresa}/entrar', [EmpresaController::class, 'entrar'])->name('empresas.entrar');
+        Route::post('/empresas/salir', [EmpresaController::class, 'salir'])->name('empresas.salir');
+        Route::get('/licencias', [LicenciaAdminController::class, 'index'])->name('licencias.index');
+        Route::post('/licencias/generar', [LicenciaAdminController::class, 'generar'])->name('licencias.generar');
+        Route::post('/licencias/{empresa}', [LicenciaAdminController::class, 'aplicar'])->name('licencias.aplicar');
+    });
     Route::get('/acerca', [EmpresaController::class, 'acerca'])->name('acerca');
     Route::get('/acerca/datos', [EmpresaController::class, 'acercaDatos'])->name('acerca.datos');
     Route::post('/acerca', [EmpresaController::class, 'activar'])->name('acerca.activar');

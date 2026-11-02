@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
+        $middleware->append(\App\Http\Middleware\CabecerasSeguras::class);
         $middleware->prepend(\App\Http\Middleware\IdentificarTenant::class);
         $middleware->redirectGuestsTo(fn () => cobro_route('login'));
         $middleware->redirectUsersTo(function () {
@@ -51,6 +52,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'vigente' => \App\Http\Middleware\LicenciaVigente::class,
             'puede' => \App\Http\Middleware\ExigirPermiso::class,
             'cobro' => \App\Http\Middleware\ExigirCobroActivo::class,
+            'maestro' => \App\Http\Middleware\ExigirMaestro::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

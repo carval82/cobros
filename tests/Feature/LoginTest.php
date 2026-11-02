@@ -18,7 +18,7 @@ class LoginTest extends TestCase
 
     public function test_la_primera_visita_crea_la_cuenta_y_entra(): void
     {
-        $this->get('/login')->assertOk()->assertSee('Crea la primera cuenta');
+        $this->get('/login')->assertOk()->assertSee('Crea la primera cuenta')->assertHeader('X-Frame-Options', 'DENY');
 
         $this->post('/login', [
             'name' => 'Laura Cobros',

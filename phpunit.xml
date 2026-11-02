@@ -32,5 +32,6 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="COBROS_LICENCIA_SECRETO" value="prueba-licencia-solo-en-tests-2026"/>
     </php>
 </phpunit>
