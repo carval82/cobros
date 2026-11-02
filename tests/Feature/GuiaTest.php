@@ -21,7 +21,10 @@ class GuiaTest extends TestCase
             ->assertSee('¿Quieres ver cómo funciona?')
             ->assertSee('Entrar a la visita')
             ->assertSee('cualquier correo')
+            ->assertSee('Registrar abono')
+            ->assertSee('Cuotas de hoy')
             ->assertSee('Restringido')
+            ->assertSee('Retirar la ganancia')
             ->assertSee('Crear mi cobro en demo')
             ->assertDontSee('caja_cobro');
 

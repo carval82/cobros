@@ -597,9 +597,7 @@ a.direccion-corta { display: inline-block; max-width: 240px; margin: 0; padding:
 }
 .visita-app .side nav button.activo { background: var(--signal); color: #152016; }
 .visita-app .side nav button[hidden] { display: none !important; }
-.visita-app .entrada-cobro,
-.visita-app .panel,
-.visita-app .grid-cifras { max-width: 680px; }
+.visita-app .tabla-wrap { overflow-x: auto; }
 .coach {
     margin-top: 18px;
     padding: 16px 18px;
