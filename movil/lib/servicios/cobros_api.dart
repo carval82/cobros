@@ -136,7 +136,10 @@ class CobrosApi {
     }
   }
 
-  Future<Map<String, dynamic>> hoy() => _cartera('GET', '/hoy/datos');
+  Future<Map<String, dynamic>> hoy({int? caja}) {
+    final consulta = caja == null ? '' : '?caja=$caja';
+    return _cartera('GET', '/hoy/datos$consulta');
+  }
 
   Future<Map<String, dynamic>> clientes({String q = ''}) {
     final consulta = q.trim().isEmpty ? '' : '?q=${Uri.encodeQueryComponent(q)}';

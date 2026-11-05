@@ -19,6 +19,7 @@ class _HoyState extends State<Hoy> {
   Map<String, dynamic>? _datos;
   String? _error;
   bool _cargando = true;
+  int? _caja;
 
   @override
   void initState() {
@@ -32,13 +33,23 @@ class _HoyState extends State<Hoy> {
       _error = null;
     });
     try {
-      final datos = await widget.api.hoy();
+      final datos = await widget.api.hoy(caja: _caja);
       if (mounted) setState(() => _datos = datos);
     } catch (e) {
       if (mounted) setState(() => _error = textoError(e));
     } finally {
       if (mounted) setState(() => _cargando = false);
     }
+  }
+
+  Future<void> _entrar(int id) async {
+    setState(() => _caja = id);
+    await _cargar();
+  }
+
+  Future<void> _volver() async {
+    setState(() => _caja = null);
+    await _cargar();
   }
 
   Future<void> _abrir(int prestamoId) async {
@@ -54,40 +65,116 @@ class _HoyState extends State<Hoy> {
     if (_cargando && datos == null) {
       return const Center(child: CircularProgressIndicator());
     }
-    final hoy = (datos?['hoy'] as List?) ?? const [];
-    final atrasadas = (datos?['atrasadas'] as List?) ?? const [];
-
+    final dentro = _caja != null && datos?['mostrar'] == true;
     return RefreshIndicator(
       onRefresh: _cargar,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
         children: [
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 1.55,
-            children: [
-              Cifra(titulo: 'Cobrar hoy', valor: pesos(datos?['cobrar_hoy']), destacada: true),
-              Cifra(titulo: 'Mora', valor: pesos(datos?['mora']), alerta: entero(datos?['mora']) > 0),
-              Cifra(titulo: 'Cobrado hoy', valor: pesos(datos?['cobrado_hoy'])),
-              Cifra(titulo: 'Cartera', valor: pesos(datos?['cartera'])),
-            ],
-          ),
-          const Titulo('PARA HOY'),
-          if (hoy.isEmpty) const Text('No hay cuotas que venzan hoy.', style: TextStyle(color: muted)),
-          for (final item in hoy)
-            if (item is Map) _CuotaTile(item: item, onTap: () => _abrir(entero(item['prestamo_id']))),
-          const Titulo('ATRASADOS'),
-          if (atrasadas.isEmpty) const Text('Nadie está en mora.', style: TextStyle(color: muted)),
-          for (final item in atrasadas)
-            if (item is Map) _CuotaTile(item: item, onTap: () => _abrir(entero(item['prestamo_id'])), mora: true),
+          if (!dentro) ..._lista(datos) else ..._cobro(datos!),
           if (_error != null) Text(_error!, style: const TextStyle(color: peligro)),
         ],
       ),
     );
+  }
+
+  List<Widget> _lista(Map<String, dynamic>? datos) {
+    final cobros = (datos?['cobros'] as List?) ?? const [];
+    return [
+      const Text('Hoy', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, height: 1)),
+      const SizedBox(height: 6),
+      const Text(
+        'Entra a un cobro por su nombre. Ahí se ve todo lo de ese cobro.',
+        style: TextStyle(color: muted),
+      ),
+      const Titulo('COBROS'),
+      if (cobros.isEmpty) const Text('Todavía no hay cobros abiertos.', style: TextStyle(color: muted)),
+      for (final item in cobros)
+        if (item is Map)
+          Lamina(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    item['nombre']?.toString() ?? 'Cobro',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                  ),
+                ),
+                FilledButton(
+                  onPressed: () => _entrar(entero(item['id'])),
+                  child: const Text('Entrar'),
+                ),
+              ],
+            ),
+          ),
+    ];
+  }
+
+  List<Widget> _cobro(Map<String, dynamic> datos) {
+    final hoy = (datos['hoy'] as List?) ?? const [];
+    final atrasadas = (datos['atrasadas'] as List?) ?? const [];
+    final movimientos = (datos['movimientos'] as List?) ?? const [];
+    final detenidos = entero(datos['detenidos']);
+    return [
+      Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(datos['nombre']?.toString() ?? 'Cobro', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, height: 1)),
+                const SizedBox(height: 4),
+                Text(datos['equipo']?.toString().isNotEmpty == true ? datos['equipo'].toString() : 'Solo', style: const TextStyle(color: muted)),
+              ],
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 10),
+      OutlinedButton(onPressed: _volver, child: const Text('Volver a los cobros')),
+      const SizedBox(height: 12),
+      GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 1.35,
+        children: [
+          Cifra(titulo: 'En caja', valor: pesos(datos['en_caja']), destacada: true),
+          Cifra(titulo: 'Cartera en la calle', valor: pesos(datos['cartera'])),
+          Cifra(titulo: 'Para cobrar hoy', valor: pesos(datos['cobrar_hoy'])),
+          Cifra(titulo: 'Atrasado', valor: pesos(datos['mora']), alerta: entero(datos['mora']) > 0),
+          Cifra(
+            titulo: detenidos > 0 ? 'Cobrado hoy · $detenidos detenidos' : 'Cobrado hoy',
+            valor: pesos(datos['cobrado_hoy']),
+          ),
+        ],
+      ),
+      const Titulo('CUOTAS DE HOY'),
+      if (hoy.isEmpty) const Text('Hoy no hay cuotas por cobrar.', style: TextStyle(color: muted)),
+      for (final item in hoy)
+        if (item is Map) _CuotaTile(item: item, onTap: () => _abrir(entero(item['prestamo_id']))),
+      const Titulo('ATRASADOS'),
+      if (atrasadas.isEmpty) const Text('No hay cuotas vencidas.', style: TextStyle(color: muted)),
+      for (final item in atrasadas)
+        if (item is Map) _CuotaTile(item: item, onTap: () => _abrir(entero(item['prestamo_id'])), mora: true),
+      const Titulo('HISTORIAL RECIENTE'),
+      if (movimientos.isEmpty) const Text('Todavía no hay movimientos.', style: TextStyle(color: muted)),
+      for (final item in movimientos)
+        if (item is Map)
+          Lamina(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item['fecha']?.toString() ?? '', style: const TextStyle(color: muted, fontSize: 12)),
+                Text(item['cliente']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.w800)),
+                if ((item['descripcion']?.toString() ?? '').isNotEmpty)
+                  Text(item['descripcion'].toString(), style: const TextStyle(color: muted)),
+              ],
+            ),
+          ),
+    ];
   }
 }
 

@@ -13,6 +13,7 @@ use App\Services\PrestamoService;
 use App\Support\CobroActivo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -69,47 +70,89 @@ class DashboardController extends Controller
         return redirect()->to(cobro_route('dashboard'));
     }
 
-    public function datos(): JsonResponse
+    public function datos(Request $request): JsonResponse
     {
         $this->prestamos->sincronizarCartera();
+        $lista = $this->cobros();
+        $cobros = $lista->map(fn (array $item) => [
+            'id' => $item['id'],
+            'nombre' => $item['nombre'],
+            'equipo' => $item['equipo'] ?? 'Solo',
+        ])->values();
+
+        $pedido = (int) $request->query('caja', 0);
+        if ($pedido > 0) {
+            $informe = $lista->firstWhere('id', $pedido);
+            abort_unless(is_array($informe), 403);
+
+            return response()->json($this->paqueteHoy($pedido, $cobros, true, $informe));
+        }
+
         $ids = $this->cajaIdsVisibles();
 
-        $hoy = $this->cuotasAbiertas(null, $ids)
+        return response()->json($this->paqueteHoy(null, $cobros, false, null, $ids));
+    }
+
+    private function paqueteHoy(?int $cajaId, $cobros, bool $mostrar, ?array $informe = null, ?array $ids = null): array
+    {
+        $hoy = $this->cuotasAbiertas($cajaId, $cajaId ? null : $ids)
             ->whereDate('fecha_vencimiento', today())
             ->orderBy('id')
             ->get();
 
-        $atrasadas = $this->cuotasAbiertas(null, $ids)
+        $atrasadas = $this->cuotasAbiertas($cajaId, $cajaId ? null : $ids)
             ->whereDate('fecha_vencimiento', '<', today())
             ->orderBy('fecha_vencimiento')
             ->get();
 
         $cartera = (int) Cuota::query()
             ->where('saldo', '>', 0)
-            ->whereHas('prestamo', function ($q) use ($ids) {
+            ->whereHas('prestamo', function ($q) use ($cajaId, $ids) {
                 $q->whereIn('estado', ['activo', 'detenido']);
-                if (is_array($ids)) {
+                if ($cajaId) {
+                    $q->where('caja_cobro_id', $cajaId);
+                } elseif (is_array($ids)) {
                     $q->whereIn('caja_cobro_id', $ids);
                 }
             })
             ->sum('saldo');
 
-        return response()->json([
+        $escritorio = $cajaId ? $this->escritorio($cajaId) : null;
+
+        return [
             'token' => csrf_token(),
-            'cobrar_hoy' => (int) $hoy->sum('saldo'),
-            'mora' => (int) $atrasadas->sum('saldo'),
-            'cobrado_hoy' => (int) Pago::query()
-                ->when(is_array($ids), fn ($q) => $q->whereIn('caja_cobro_id', $ids))
-                ->whereDate('fecha', today())
-                ->sum('monto'),
-            'cartera' => $cartera,
-            'detenidos' => Prestamo::query()
-                ->when(is_array($ids), fn ($q) => $q->whereIn('caja_cobro_id', $ids))
-                ->where('estado', 'detenido')
-                ->count(),
-            'hoy' => $hoy->map(fn (Cuota $cuota) => $this->cuotaFila($cuota))->values(),
-            'atrasadas' => $atrasadas->map(fn (Cuota $cuota) => $this->cuotaFila($cuota))->values(),
-        ]);
+            'mostrar' => $mostrar,
+            'cobros' => $cobros,
+            'caja' => $cajaId,
+            'nombre' => $informe['nombre'] ?? null,
+            'equipo' => $informe['equipo'] ?? null,
+            'en_caja' => (int) ($informe['en_caja'] ?? 0),
+            'cobrar_hoy' => $escritorio ? $escritorio['cobrarHoy'] : (int) $hoy->sum('saldo'),
+            'mora' => $escritorio ? $escritorio['mora'] : (int) $atrasadas->sum('saldo'),
+            'cobrado_hoy' => $escritorio
+                ? $escritorio['cobradoHoy']
+                : (int) Pago::query()
+                    ->when(is_array($ids), fn ($q) => $q->whereIn('caja_cobro_id', $ids))
+                    ->whereDate('fecha', today())
+                    ->sum('monto'),
+            'cartera' => $escritorio ? $escritorio['cartera'] : $cartera,
+            'detenidos' => $escritorio
+                ? $escritorio['detenidos']
+                : Prestamo::query()
+                    ->when($cajaId, fn ($q) => $q->where('caja_cobro_id', $cajaId))
+                    ->when(is_array($ids), fn ($q) => $q->whereIn('caja_cobro_id', $ids))
+                    ->where('estado', 'detenido')
+                    ->count(),
+            'hoy' => ($escritorio ? $escritorio['hoy'] : $hoy)->map(fn (Cuota $cuota) => $this->cuotaFila($cuota))->values(),
+            'atrasadas' => ($escritorio ? $escritorio['atrasadas'] : $atrasadas)->map(fn (Cuota $cuota) => $this->cuotaFila($cuota))->values(),
+            'movimientos' => $escritorio
+                ? $escritorio['movimientos']->map(fn (Movimiento $movimiento) => [
+                    'fecha' => $movimiento->fecha?->translatedFormat('d M'),
+                    'cliente' => $movimiento->cliente?->nombre ?? 'Cliente',
+                    'descripcion' => $movimiento->descripcion,
+                ])->values()
+                : [],
+        ];
     }
 
     private function cobros()

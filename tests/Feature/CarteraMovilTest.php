@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\CajaCobro;
 use App\Models\Cliente;
 use App\Models\Pago;
 use App\Models\Prestamo;
@@ -74,6 +75,50 @@ class CarteraMovilTest extends TestCase
         $this->getJson('/clientes/datos')
             ->assertOk()
             ->assertJsonPath('clientes.0.nombre', 'Ana');
+    }
+
+    public function test_el_hoy_del_celular_entra_a_un_cobro_y_no_mezcla_otro(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $this->post('/cuadre/abrir', ['valor_inicial' => 500000, 'nombre' => 'Norte'])->assertRedirect();
+        $this->post('/cuadre/abrir', ['valor_inicial' => 100000, 'nombre' => 'Sur'])->assertRedirect();
+
+        $norte = CajaCobro::query()->where('nombre', 'Norte')->firstOrFail();
+        $sur = CajaCobro::query()->where('nombre', 'Sur')->firstOrFail();
+        $ana = Cliente::query()->create(['nombre' => 'Ana Norte', 'direccion' => 'Calle 10', 'telefono' => '3001112233']);
+
+        $this->postJson('/prestamos', [
+            'cliente_id' => $ana->id,
+            'caja_cobro_id' => $norte->id,
+            'capital' => 100000,
+            'porcentaje' => 20,
+            'cuotas' => 1,
+            'frecuencia' => 'diario',
+            'fecha_primer_pago' => now()->toDateString(),
+        ])->assertOk();
+
+        Prestamo::query()->first()->cuotas()->update(['fecha_vencimiento' => now()->toDateString()]);
+
+        $this->getJson('/hoy/datos')
+            ->assertOk()
+            ->assertJsonPath('mostrar', false)
+            ->assertJsonFragment(['nombre' => 'Norte'])
+            ->assertJsonFragment(['nombre' => 'Sur']);
+
+        $this->getJson('/hoy/datos?caja='.$norte->id)
+            ->assertOk()
+            ->assertJsonPath('mostrar', true)
+            ->assertJsonPath('nombre', 'Norte')
+            ->assertJsonPath('hoy.0.cliente', 'Ana Norte')
+            ->assertJsonPath('en_caja', 400000);
+
+        $this->getJson('/hoy/datos?caja='.$sur->id)
+            ->assertOk()
+            ->assertJsonPath('nombre', 'Sur')
+            ->assertJsonPath('hoy', [])
+            ->assertJsonPath('en_caja', 100000);
+
+        $this->getJson('/hoy/datos?caja=99999')->assertForbidden();
     }
 
     public function test_consulta_no_crea_clientes_ni_cobra(): void
